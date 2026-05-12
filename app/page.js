@@ -543,6 +543,33 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
   );
 }
 
+// ========== PRODUCT CARD (sale modal) ==========
+function ProductCard({ p, onAdd }) {
+  const outOfStock = p.stock !== null && p.stock <= 0;
+  return (
+    <button onClick={() => !outOfStock && onAdd(p)} disabled={outOfStock}
+      className="text-left rounded-xl overflow-hidden transition-all hover:scale-[1.02] disabled:opacity-40"
+      style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.07)' }}>
+      <div className="aspect-square overflow-hidden" style={{ background: 'rgba(0,0,0,0.04)' }}>
+        {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package className="w-8 h-8 text-gray-300" />
+          </div>
+        )}
+      </div>
+      <div className="p-2">
+        <p className="font-semibold text-xs text-gray-800 truncate">{p.name}</p>
+        <p className="text-indigo-600 font-bold text-xs">{fmtTL(p.price)}</p>
+        {p.stock !== null && (
+          <p className="text-xs" style={{ color: outOfStock ? '#ef4444' : p.stock <= 5 ? '#f97316' : '#9ca3af' }}>
+            {outOfStock ? 'Tükendi' : `${p.stock} adet`}
+          </p>
+        )}
+      </div>
+    </button>
+  );
+}
+
 // ========== SALE MODAL ==========
 function SaleModal({ customer, products, customerBalance, onClose, onDone, showToast }) {
   const [cart, setCart] = useState([]);
@@ -552,6 +579,14 @@ function SaleModal({ customer, products, customerBalance, onClose, onDone, showT
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return products.filter(p => p.name.toLowerCase().includes(q));
+  }, [products, search]);
+
+  const grouped = useMemo(() => {
+    if (search) return null;
+    return CATEGORIES.map(cat => ({
+      ...cat,
+      items: products.filter(p => (p.category || 'diger') === cat.id),
+    })).filter(cat => cat.items.length > 0);
   }, [products, search]);
 
   const cartTotal = cart.reduce((s, item) => {
@@ -608,34 +643,30 @@ function SaleModal({ customer, products, customerBalance, onClose, onDone, showT
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Ürün ara..." className="input pl-9 py-2 text-sm" />
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-3 gap-2">
-              {filtered.map(p => {
-                const outOfStock = p.stock !== null && p.stock <= 0;
-                return (
-                  <button key={p.id} onClick={() => !outOfStock && addToCart(p)} disabled={outOfStock}
-                    className="text-left rounded-xl overflow-hidden transition-all hover:scale-[1.02] disabled:opacity-40"
-                    style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.07)' }}>
-                    <div className="aspect-square overflow-hidden" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                      {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="w-8 h-8 text-gray-300" />
-                        </div>
-                      )}
+            {grouped ? (
+              <div className="space-y-4">
+                {grouped.map(cat => (
+                  <div key={cat.id}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded-md text-xs font-bold"
+                        style={{ background: cat.bg, color: cat.color }}>
+                        {cat.label}
+                      </span>
                     </div>
-                    <div className="p-2">
-                      <p className="font-semibold text-xs text-gray-800 truncate">{p.name}</p>
-                      <p className="text-indigo-600 font-bold text-xs">{fmtTL(p.price)}</p>
-                      {p.stock !== null && (
-                        <p className="text-xs" style={{ color: outOfStock ? '#ef4444' : p.stock <= 5 ? '#f97316' : '#9ca3af' }}>
-                          {p.stock} adet
-                        </p>
-                      )}
+                    <div className="grid grid-cols-3 gap-2">
+                      {cat.items.map(p => <ProductCard key={p.id} p={p} onAdd={addToCart} />)}
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-            {filtered.length === 0 && <p className="text-center py-8 text-gray-400 text-sm">Ürün bulunamadı</p>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  {filtered.map(p => <ProductCard key={p.id} p={p} onAdd={addToCart} />)}
+                </div>
+                {filtered.length === 0 && <p className="text-center py-8 text-gray-400 text-sm">Ürün bulunamadı</p>}
+              </>
+            )}
           </div>
 
           <div className="sm:w-64 border-t sm:border-t-0 sm:border-l p-4 flex flex-col" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
