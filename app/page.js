@@ -431,7 +431,6 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
   const [paymentCustomer, setPaymentCustomer] = useState(null);
 
   const startAdd = () => {
-    if (customers.length >= 20) { showToast('En fazla 20 müşteri eklenebilir', 'error'); return; }
     setAdding(true); setAddForm({ name: '', password: '' });
   };
 
@@ -466,9 +465,9 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
       <div className="flex justify-between items-center mb-4 mt-1">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Müşteriler</h2>
-          <p className="text-xs text-gray-500">{customers.length} / 20</p>
+          <p className="text-xs text-gray-500">{customers.length} müşteri</p>
         </div>
-        <button onClick={startAdd} disabled={customers.length >= 20} className="btn-primary flex items-center gap-2 disabled:opacity-40">
+        <button onClick={startAdd} className="btn-primary flex items-center gap-2">
           <Plus className="w-4 h-4" /> Yeni Müşteri
         </button>
       </div>
