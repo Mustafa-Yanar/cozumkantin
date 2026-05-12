@@ -83,8 +83,53 @@ export async function DELETE(request) {
   if (!session) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
+  const itemIndex = searchParams.get('itemIndex');
   if (!id) return NextResponse.json({ error: 'id gerekli' }, { status: 400 });
-  const txns = await getTransactions();
-  await setTransactions(txns.filter((t) => t.id !== id));
+
+  const [txns, products] = await Promise.all([getTransactions(), getProducts()]);
+  const txn = txns.find((t) => t.id === id);
+  if (!txn) return NextResponse.json({ error: 'Bulunamadı' }, { status: 404 });
+
+  if (itemIndex !== null) {
+    // Remove a single item from the transaction
+    const idx = parseInt(itemIndex);
+    const removedItem = txn.items[idx];
+    if (!removedItem) return NextResponse.json({ error: 'Ürün bulunamadı' }, { status: 404 });
+
+    const newItems = txn.items.filter((_, i) => i !== idx);
+
+    // Revert stock for the removed item
+    const nextProducts = products.map((p) =>
+      p.id === removedItem.productId && p.stock !== null
+        ? { ...p, stock: p.stock + removedItem.qty }
+        : p
+    );
+
+    if (newItems.length === 0) {
+      // No items left — delete the whole transaction
+      await Promise.all([
+        setTransactions(txns.filter((t) => t.id !== id)),
+        setProducts(nextProducts),
+      ]);
+    } else {
+      const updatedTxn = { ...txn, items: newItems, total: newItems.reduce((s, i) => s + i.subtotal, 0) };
+      await Promise.all([
+        setTransactions(txns.map((t) => (t.id === id ? updatedTxn : t))),
+        setProducts(nextProducts),
+      ]);
+    }
+  } else {
+    // Delete entire transaction and revert all stock
+    const nextProducts = products.map((p) => {
+      const it = txn.items.find((x) => x.productId === p.id);
+      if (it && p.stock !== null) return { ...p, stock: p.stock + it.qty };
+      return p;
+    });
+    await Promise.all([
+      setTransactions(txns.filter((t) => t.id !== id)),
+      setProducts(nextProducts),
+    ]);
+  }
+
   return NextResponse.json({ ok: true });
 }

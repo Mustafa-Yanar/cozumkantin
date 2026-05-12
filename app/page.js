@@ -564,6 +564,8 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
           txns={txns.filter(t => t.customerId === viewing.id)}
           payments={payments.filter(p => p.customerId === viewing.id)}
           onClose={() => setViewing(null)}
+          onRefresh={refresh}
+          showToast={showToast}
         />
       )}
 
@@ -824,15 +826,47 @@ function PaymentModal({ customer, customerBalance, onClose, onDone, showToast })
 }
 
 // ========== CUSTOMER HISTORY MODAL ==========
-function CustomerHistoryModal({ customer, txns, payments, onClose }) {
-  const combined = useMemo(() => {
-    const all = [...txns.map(t => ({ type: 'sale', ...t })), ...payments.map(p => ({ type: 'payment', ...p }))];
-    return all.sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [txns, payments]);
+function CustomerHistoryModal({ customer, txns, payments, onClose, onRefresh, showToast }) {
+  const [localTxns, setLocalTxns] = useState(txns);
+  const [deleting, setDeleting] = useState(null); // 'txnId' or 'txnId-itemIdx'
 
-  const totalDebt = txns.reduce((s, t) => s + t.total, 0);
+  const combined = useMemo(() => {
+    const all = [...localTxns.map(t => ({ type: 'sale', ...t })), ...payments.map(p => ({ type: 'payment', ...p }))];
+    return all.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [localTxns, payments]);
+
+  const totalDebt = localTxns.reduce((s, t) => s + t.total, 0);
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
   const balance = totalDebt - totalPaid;
+
+  const deleteTxn = async (txnId) => {
+    if (!confirm('Bu alışverişin tamamı silinsin mi? Stok iade edilecek.')) return;
+    setDeleting(txnId);
+    try {
+      await api(`/api/transactions?id=${txnId}`, { method: 'DELETE' });
+      setLocalTxns(prev => prev.filter(t => t.id !== txnId));
+      showToast('Alışveriş silindi');
+      onRefresh();
+    } catch (e) { showToast(e.message, 'error'); }
+    setDeleting(null);
+  };
+
+  const deleteItem = async (txnId, itemIndex) => {
+    const key = `${txnId}-${itemIndex}`;
+    setDeleting(key);
+    try {
+      await api(`/api/transactions?id=${txnId}&itemIndex=${itemIndex}`, { method: 'DELETE' });
+      setLocalTxns(prev => prev.map(t => {
+        if (t.id !== txnId) return t;
+        const newItems = t.items.filter((_, i) => i !== itemIndex);
+        if (newItems.length === 0) return null;
+        return { ...t, items: newItems, total: newItems.reduce((s, i) => s + i.subtotal, 0) };
+      }).filter(Boolean));
+      showToast('Ürün silindi');
+      onRefresh();
+    } catch (e) { showToast(e.message, 'error'); }
+    setDeleting(null);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -866,19 +900,43 @@ function CustomerHistoryModal({ customer, txns, payments, onClose }) {
                     : <Wallet className="w-4 h-4 text-green-400" />}
                   <span className="text-xs text-gray-500">{fmtDate(rec.date)}</span>
                 </div>
-                <span className="font-bold text-sm" style={{ color: rec.type === 'sale' ? '#f87171' : '#4ade80' }}>
-                  {rec.type === 'sale' ? '+' : '-'}{fmtTL(rec.type === 'sale' ? rec.total : rec.amount)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm" style={{ color: rec.type === 'sale' ? '#f87171' : '#4ade80' }}>
+                    {rec.type === 'sale' ? '+' : '-'}{fmtTL(rec.type === 'sale' ? rec.total : rec.amount)}
+                  </span>
+                  {rec.type === 'sale' && (
+                    <button
+                      onClick={() => deleteTxn(rec.id)}
+                      disabled={deleting === rec.id}
+                      title="Alışverişi tamamen sil"
+                      className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:bg-red-50"
+                      style={{ color: '#f87171' }}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
               {rec.type === 'sale' && (
-                <div className="ml-6 mt-2 space-y-1">
+                <div className="ml-6 mt-2 space-y-1.5">
                   {rec.items.map((it, idx) => (
-                    <div key={idx}>
-                      <div className="flex justify-between text-sm text-gray-300">
-                        <span>{it.qty}× {it.productName}</span>
-                        <span>{fmtTL(it.subtotal)}</span>
+                    <div key={idx} className="flex items-center justify-between gap-2 group">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>{it.qty}× {it.productName}</span>
+                          <span className="font-medium">{fmtTL(it.subtotal)}</span>
+                        </div>
+                        {it.note && <p className="text-xs text-gray-400 italic ml-1">📝 {it.note}</p>}
                       </div>
-                      {it.note && <p className="text-xs text-gray-500 italic ml-2">📝 {it.note}</p>}
+                      {rec.items.length > 1 && (
+                        <button
+                          onClick={() => deleteItem(rec.id, idx)}
+                          disabled={deleting === `${rec.id}-${idx}`}
+                          title="Bu ürünü sil"
+                          className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                          style={{ color: '#f87171' }}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
