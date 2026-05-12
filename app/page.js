@@ -518,7 +518,6 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="font-semibold" style={{ color: '#5C3A1E' }}>{c.name}</p>
-                        <p className="text-xs" style={{ color: '#8B7355' }}>@{c.username}</p>
                       </div>
                       <span className="text-sm font-bold" style={{ color: bal > 0 ? '#8B2E1E' : '#3D5A2E' }}>
                         {fmtTL(bal)}
@@ -802,7 +801,6 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 min-w-0">
                   <p className="font-bold truncate" style={{ color: '#5C3A1E' }}>{c.name}</p>
-                  <p className="text-xs" style={{ color: '#8B7355' }}>@{c.username}</p>
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => setViewing(c)} className="p-1.5 rounded" style={{ background: '#f5efe0', color: '#8B4513' }}>
