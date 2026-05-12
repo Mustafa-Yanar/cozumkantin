@@ -119,18 +119,11 @@ export default function Page() {
 // ========== LANDING ==========
 function Landing({ onPick, hasOwner }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
-      <div className="text-center mb-12 max-w-2xl">
-        <div className="inline-block mb-6 px-4 py-2 rounded" style={{ background: '#8B4513', color: '#f5efe0', transform: 'rotate(-2deg)' }}>
-          <span className="text-sm tracking-widest">EST. 2026 — VERESİYE DEFTERİ</span>
-        </div>
+    <div className="h-screen flex flex-col items-center justify-center px-6">
+      <div className="text-center mb-8 max-w-2xl">
         <h1 className="text-6xl md:text-7xl mb-4 leading-tight" style={{ color: '#5C3A1E', fontWeight: 'bold', letterSpacing: '-0.02em' }}>
           Çözüm <em style={{ color: '#8B4513' }}>Kantin</em>
         </h1>
-        <div className="h-1 w-24 mx-auto mb-6" style={{ background: '#8B4513' }} />
-        <p className="text-xl" style={{ color: '#6B4423' }}>
-          Eski usul güven, yeni usul defter
-        </p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 w-full max-w-3xl">
@@ -165,9 +158,6 @@ function Landing({ onPick, hasOwner }) {
         </button>
       </div>
 
-      <p className="mt-12 text-xs" style={{ color: '#8B7355' }}>
-        Veriler bulutta saklanır, her cihazdan erişilebilir.
-      </p>
     </div>
   );
 }
@@ -340,32 +330,26 @@ function OwnerPanel({ onLogout, showToast }) {
   const lowStock = data.products.filter(p => p.stock !== null && p.stock <= 5).length;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <header className="border-b-2 px-6 py-4" style={{ borderColor: '#8B4513', background: '#fdfaf0' }}>
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Coffee className="w-8 h-8" style={{ color: '#8B4513' }} />
-            <div>
-              <h1 className="text-xl font-bold" style={{ color: '#5C3A1E' }}>Çözüm Kantin · Yönetim</h1>
-              <p className="text-xs" style={{ color: '#6B4423' }}>Toplam Açık: <strong>{fmtTL(totalDebt)}</strong> · {data.customers.length} müşteri · {data.products.length} ürün</p>
-            </div>
+        <div className="max-w-7xl mx-auto flex items-center gap-3">
+          <Coffee className="w-8 h-8 flex-shrink-0" style={{ color: '#8B4513' }} />
+          <div>
+            <h1 className="text-xl font-bold" style={{ color: '#5C3A1E' }}>Çözüm Kantin · Yönetim</h1>
+            <p className="text-xs" style={{ color: '#6B4423' }}>Toplam Açık: <strong>{fmtTL(totalDebt)}</strong> · {data.customers.length} müşteri · {data.products.length} ürün</p>
           </div>
-          <button onClick={onLogout} className="flex items-center gap-2 px-4 py-2 rounded text-sm"
-            style={{ background: '#5C3A1E', color: '#f5efe0' }}>
-            <LogOut className="w-4 h-4" /> Çıkış
-          </button>
         </div>
       </header>
 
       <nav className="border-b px-6" style={{ borderColor: 'rgba(139, 69, 19, 0.3)', background: '#f5efe0' }}>
-        <div className="max-w-7xl mx-auto flex overflow-x-auto">
+        <div className="max-w-7xl mx-auto flex">
           {[
             { id: 'sale', label: 'Satış Yap', icon: ShoppingBag },
             { id: 'customers', label: 'Müşteriler', icon: Users },
             { id: 'products', label: 'Ürünler / Stok', icon: Package, badge: lowStock > 0 ? lowStock : null },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className="px-5 py-3 flex items-center gap-2 text-sm font-semibold whitespace-nowrap border-b-2 transition"
+              className="flex-1 py-3 flex items-center justify-center gap-2 text-sm font-semibold border-b-2 transition"
               style={{
                 borderColor: tab === t.id ? '#8B4513' : 'transparent',
                 color: tab === t.id ? '#5C3A1E' : '#8B7355'
@@ -377,7 +361,7 @@ function OwnerPanel({ onLogout, showToast }) {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-6">
+      <main className="max-w-7xl mx-auto px-6 py-6 w-full flex-1">
         {loading ? (
           <p className="text-center py-12" style={{ color: '#8B7355' }}>Yükleniyor...</p>
         ) : (
@@ -388,6 +372,15 @@ function OwnerPanel({ onLogout, showToast }) {
           </>
         )}
       </main>
+
+      <footer className="px-6 py-4 border-t" style={{ borderColor: 'rgba(139, 69, 19, 0.2)', background: '#fdfaf0' }}>
+        <div className="max-w-7xl mx-auto flex justify-center">
+          <button onClick={onLogout} className="flex items-center gap-2 px-6 py-2 rounded text-sm"
+            style={{ background: '#5C3A1E', color: '#f5efe0' }}>
+            <LogOut className="w-4 h-4" /> Çıkış Yap
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -867,7 +860,6 @@ function CustomerHistoryModal({ customer, txns, payments, onClose }) {
         <div className="p-5 border-b-2 flex justify-between items-start" style={{ borderColor: '#8B4513' }}>
           <div>
             <h3 className="text-xl font-bold" style={{ color: '#5C3A1E' }}>{customer.name}</h3>
-            <p className="text-xs" style={{ color: '#8B7355' }}>@{customer.username}</p>
             <div className="flex gap-4 mt-2 text-sm">
               <span style={{ color: '#8B2E1E' }}>Toplam alışveriş: <strong>{fmtTL(totalDebt)}</strong></span>
               <span style={{ color: '#3D5A2E' }}>Toplam ödeme: <strong>{fmtTL(totalPaid)}</strong></span>
@@ -1365,7 +1357,6 @@ function CustomerPanel({ customer, onLogout }) {
             <User className="w-8 h-8" style={{ color: '#3D5A2E' }} />
             <div>
               <h1 className="text-xl font-bold" style={{ color: '#5C3A1E' }}>Hoş geldiniz, {customer.name}</h1>
-              <p className="text-xs" style={{ color: '#6B4423' }}>@{customer.username}</p>
             </div>
           </div>
           <button onClick={onLogout} className="flex items-center gap-2 px-4 py-2 rounded text-sm"
