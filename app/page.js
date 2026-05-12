@@ -703,32 +703,33 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
-  const [form, setForm] = useState({ name: '', username: '', password: '' });
+  const [form, setForm] = useState({ name: '', password: '' });
   const [busy, setBusy] = useState(false);
 
   const startAdd = () => {
     if (customers.length >= 20) { showToast('En fazla 20 müşteri eklenebilir', 'error'); return; }
-    setForm({ name: '', username: '', password: '' });
+    setForm({ name: '', password: '' });
     setAdding(true);
   };
 
   const startEdit = (c) => {
-    setForm({ name: c.name, username: c.username, password: c.password });
+    setForm({ name: c.name, password: c.password });
     setEditing(c.id);
   };
 
   const submit = async () => {
-    if (!form.name.trim() || !form.username.trim() || !form.password.trim()) {
+    if (!form.name.trim() || !form.password.trim()) {
       showToast('Tüm alanları doldurun', 'error'); return;
     }
+    const payload = { ...form, username: form.name };
     setBusy(true);
     try {
       if (editing) {
-        await api('/api/customers', { method: 'PUT', body: JSON.stringify({ id: editing, ...form }) });
+        await api('/api/customers', { method: 'PUT', body: JSON.stringify({ id: editing, ...payload }) });
         showToast('Müşteri güncellendi');
         setEditing(null);
       } else {
-        await api('/api/customers', { method: 'POST', body: JSON.stringify(form) });
+        await api('/api/customers', { method: 'POST', body: JSON.stringify(payload) });
         showToast('Müşteri eklendi');
         setAdding(false);
       }
@@ -767,13 +768,9 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
       {(adding || editing) && (
         <div className="paper-card p-5 ink-shadow rounded mb-5">
           <h3 className="font-bold mb-3" style={{ color: '#5C3A1E' }}>{editing ? 'Müşteriyi Düzenle' : 'Yeni Müşteri'}</h3>
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid sm:grid-cols-2 gap-3">
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ad Soyad"
-              className="px-3 py-2 rounded border-2 outline-none"
-              style={{ borderColor: '#8B4513', background: '#fdfaf0', color: '#5C3A1E' }} />
-            <input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })}
-              placeholder="Kullanıcı adı"
+              placeholder="Müşteri adı"
               className="px-3 py-2 rounded border-2 outline-none"
               style={{ borderColor: '#8B4513', background: '#fdfaf0', color: '#5C3A1E' }} />
             <input value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
