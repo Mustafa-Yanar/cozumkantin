@@ -814,15 +814,22 @@ function CustomerHistoryModal({ customer, txns, payments, onClose }) {
 }
 
 // ========== PRODUCTS TAB ==========
+const CATEGORIES = [
+  { id: 'sicak', label: 'Sıcak İçecekler', color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
+  { id: 'soguk', label: 'Soğuk İçecekler', color: '#06b6d4', bg: 'rgba(6,182,212,0.1)' },
+  { id: 'yiyecek', label: 'Yiyecekler', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
+  { id: 'diger', label: 'Diğer', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
+];
+
 function ProductsTab({ products, refresh, showToast }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: '', price: '', stock: '', image: '', trackStock: true });
+  const [form, setForm] = useState({ name: '', price: '', stock: '', image: '', trackStock: true, category: 'diger' });
   const [busy, setBusy] = useState(false);
 
-  const startAdd = () => { setForm({ name: '', price: '', stock: '', image: '', trackStock: true }); setAdding(true); };
+  const startAdd = () => { setForm({ name: '', price: '', stock: '', image: '', trackStock: true, category: 'diger' }); setAdding(true); };
   const startEdit = (p) => {
-    setForm({ name: p.name, price: p.price.toString(), stock: p.stock !== null ? p.stock.toString() : '', image: p.image || '', trackStock: p.stock !== null });
+    setForm({ name: p.name, price: p.price.toString(), stock: p.stock !== null ? p.stock.toString() : '', image: p.image || '', trackStock: p.stock !== null, category: p.category || 'diger' });
     setEditing(p.id);
   };
 
@@ -842,7 +849,7 @@ function ProductsTab({ products, refresh, showToast }) {
     const stock = form.trackStock ? parseInt(form.stock) || 0 : null;
     setBusy(true);
     try {
-      const payload = { name: form.name, price, stock, image: form.image };
+      const payload = { name: form.name, price, stock, image: form.image, category: form.category };
       if (editing) {
         await api('/api/products', { method: 'PUT', body: JSON.stringify({ id: editing, ...payload }) });
         showToast('Ürün güncellendi'); setEditing(null);
@@ -865,6 +872,13 @@ function ProductsTab({ products, refresh, showToast }) {
     try { await api('/api/products', { method: 'PATCH', body: JSON.stringify({ id: p.id, delta }) }); await refresh(); }
     catch (e) { showToast(e.message, 'error'); }
   };
+
+  const grouped = useMemo(() => {
+    return CATEGORIES.map(cat => ({
+      ...cat,
+      items: products.filter(p => (p.category || 'diger') === cat.id),
+    })).filter(cat => cat.items.length > 0);
+  }, [products]);
 
   return (
     <div>
@@ -891,10 +905,27 @@ function ProductsTab({ products, refresh, showToast }) {
                 <label className="text-xs font-semibold text-gray-500 block mb-1.5">Fiyat (₺)</label>
                 <input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="input" />
               </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 block mb-1.5">Kategori</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {CATEGORIES.map(cat => (
+                    <button key={cat.id} type="button"
+                      onClick={() => setForm({ ...form, category: cat.id })}
+                      className="py-2 px-3 rounded-xl text-xs font-semibold text-left transition-all border"
+                      style={{
+                        background: form.category === cat.id ? cat.bg : 'transparent',
+                        borderColor: form.category === cat.id ? cat.color : 'rgba(0,0,0,0.1)',
+                        color: form.category === cat.id ? cat.color : '#6b7280',
+                      }}>
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.trackStock} onChange={(e) => setForm({ ...form, trackStock: e.target.checked })}
                   className="w-4 h-4 accent-indigo-500" />
-                <span className="text-sm text-gray-300">Stok takibi yap</span>
+                <span className="text-sm text-gray-500">Stok takibi yap</span>
               </label>
               {form.trackStock && (
                 <div>
@@ -922,68 +953,90 @@ function ProductsTab({ products, refresh, showToast }) {
         </div>
       )}
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-        {products.map(p => {
-          const lowStock = p.stock !== null && p.stock <= 5;
-          const outOfStock = p.stock !== null && p.stock <= 0;
-          return (
-            <div key={p.id} className="card overflow-hidden">
-              <div className="aspect-video overflow-hidden" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="w-10 h-10 text-gray-300" />
-                  </div>
-                )}
-              </div>
-              <div className="p-3">
-                <div className="flex justify-between items-start mb-1">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-800 text-sm truncate">{p.name}</p>
-                    <p className="text-indigo-600 font-bold text-sm">{fmtTL(p.price)}</p>
-                  </div>
-                  <div className="flex gap-1 ml-2">
-                    <button onClick={() => startEdit(p)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-white/10 transition-all">
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => remove(p)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-                {p.stock !== null ? (
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
-                    <button onClick={() => adjustStock(p, -1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white/10 transition-all"
-                      style={{ background: 'rgba(0,0,0,0.07)' }}>
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="text-sm font-bold flex items-center gap-1"
-                      style={{ color: outOfStock ? '#f87171' : lowStock ? '#fb923c' : '#9ca3af' }}>
-                      {(lowStock || outOfStock) && <AlertTriangle className="w-3 h-3" />}
-                      {p.stock} adet
-                    </span>
-                    <button onClick={() => adjustStock(p, 1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white/10 transition-all"
-                      style={{ background: 'rgba(0,0,0,0.07)' }}>
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-400 mt-2 pt-2 border-t" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>Stok takibi yok</p>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {products.length === 0 && !adding && (
+      {products.length === 0 && !adding ? (
         <div className="card p-12 text-center mt-2">
           <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <h3 className="text-lg font-bold text-gray-800 mb-1">Henüz ürün yok</h3>
           <p className="text-gray-500 text-sm">"Yeni Ürün" ile başlayın</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {grouped.map(cat => (
+            <div key={cat.id}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-3 py-1 rounded-lg text-xs font-bold"
+                  style={{ background: cat.bg, color: cat.color }}>
+                  {cat.label}
+                </span>
+                <span className="text-xs text-gray-400">{cat.items.length} ürün</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {cat.items.map(p => {
+                  const lowStock = p.stock !== null && p.stock <= 5;
+                  const outOfStock = p.stock !== null && p.stock <= 0;
+                  return (
+                    <div key={p.id} className="card overflow-hidden flex flex-col">
+                      <div className="relative" style={{ paddingBottom: '100%' }}>
+                        <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                          {p.image ? (
+                            <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="w-10 h-10 text-gray-300" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <button onClick={() => startEdit(p)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                            style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => remove(p)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                            style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        {outOfStock && (
+                          <div className="absolute inset-0 flex items-center justify-center"
+                            style={{ background: 'rgba(0,0,0,0.45)' }}>
+                            <span className="text-white text-xs font-bold px-2 py-1 rounded-lg"
+                              style={{ background: 'rgba(239,68,68,0.9)' }}>Tükendi</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3 flex flex-col flex-1">
+                        <p className="font-bold text-gray-800 text-sm truncate">{p.name}</p>
+                        <p className="text-indigo-600 font-bold text-sm mb-2">{fmtTL(p.price)}</p>
+                        {p.stock !== null ? (
+                          <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
+                            <button onClick={() => adjustStock(p, -1)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center"
+                              style={{ background: 'rgba(0,0,0,0.07)', color: '#6b7280' }}>
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="text-sm font-bold flex items-center gap-1"
+                              style={{ color: outOfStock ? '#f87171' : lowStock ? '#fb923c' : '#9ca3af' }}>
+                              {(lowStock || outOfStock) && <AlertTriangle className="w-3 h-3" />}
+                              {p.stock} adet
+                            </span>
+                            <button onClick={() => adjustStock(p, 1)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center"
+                              style={{ background: 'rgba(0,0,0,0.07)', color: '#6b7280' }}>
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 mt-auto pt-2 border-t" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>Stok takibi yok</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

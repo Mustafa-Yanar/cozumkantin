@@ -25,6 +25,7 @@ export async function POST(request) {
     price: parseFloat(body.price),
     stock: body.stock === null || body.stock === undefined ? null : parseInt(body.stock) || 0,
     image: body.image || '',
+    category: body.category || 'diger',
   };
   const next = [...products, newProduct];
   await setProducts(next);
@@ -44,6 +45,7 @@ export async function PUT(request) {
     price: body.price != null ? parseFloat(body.price) : products[idx].price,
     stock: body.stock === null ? null : body.stock !== undefined ? parseInt(body.stock) : products[idx].stock,
     image: body.image !== undefined ? body.image : products[idx].image,
+    category: body.category ?? products[idx].category ?? 'diger',
   };
   const next = [...products];
   next[idx] = updated;
