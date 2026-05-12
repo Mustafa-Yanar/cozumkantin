@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Coffee, Package, Users, LogOut, Plus, Minus, Trash2, Edit3, Save, X,
-  Search, ShoppingBag, Receipt, AlertTriangle,
-  Lock, User, Wallet, Clock, StickyNote, ChevronRight, BarChart3, Eye, EyeOff, TrendingUp
+  Search, ShoppingBag,
+  Lock, User, Wallet, ChevronRight, Eye, EyeOff
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -306,11 +306,10 @@ function OwnerPanel({ onLogout, showToast }) {
   };
 
   const totalDebt = data.customers.reduce((s, c) => s + customerBalance(c.id), 0);
-  const lowStock = data.products.filter(p => p.stock !== null && p.stock <= 5).length;
 
   const tabs = [
     { id: 'customers', label: 'Müşteriler', icon: Users },
-    { id: 'products', label: 'Ürünler', icon: Package, badge: lowStock > 0 ? lowStock : null },
+    { id: 'products', label: 'Ürünler', icon: Package },
   ];
 
   return (
@@ -595,10 +594,9 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
 
 // ========== PRODUCT CARD (sale modal) ==========
 function ProductCard({ p, onAdd }) {
-  const outOfStock = p.stock !== null && p.stock <= 0;
   return (
-    <button onClick={() => !outOfStock && onAdd(p)} disabled={outOfStock}
-      className="text-left rounded-xl overflow-hidden transition-all hover:scale-[1.02] disabled:opacity-40"
+    <button onClick={() => onAdd(p)}
+      className="text-left rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
       style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.07)' }}>
       <div className="aspect-square overflow-hidden" style={{ background: 'rgba(0,0,0,0.04)' }}>
         {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : (
@@ -610,11 +608,6 @@ function ProductCard({ p, onAdd }) {
       <div className="p-2">
         <p className="font-semibold text-xs text-gray-800 truncate">{p.name}</p>
         <p className="text-indigo-600 font-bold text-xs">{fmtTL(p.price)}</p>
-        {p.stock !== null && (
-          <p className="text-xs" style={{ color: outOfStock ? '#ef4444' : p.stock <= 5 ? '#f97316' : '#9ca3af' }}>
-            {outOfStock ? 'Tükendi' : `${p.stock} adet`}
-          </p>
-        )}
       </div>
     </button>
   );
@@ -645,10 +638,8 @@ function SaleModal({ customer, products, customerBalance, onClose, onDone, showT
   }, 0);
 
   const addToCart = (product) => {
-    if (product.stock !== null && product.stock <= 0) { showToast('Stok yok!', 'error'); return; }
     const existing = cart.find(i => i.productId === product.id);
     if (existing) {
-      if (product.stock !== null && existing.qty >= product.stock) { showToast('Stok yetersiz', 'error'); return; }
       setCart(cart.map(i => i.productId === product.id ? { ...i, qty: i.qty + 1 } : i));
     } else {
       setCart([...cart, { productId: product.id, qty: 1, note: '' }]);
@@ -996,7 +987,7 @@ function ProductEditModal({ product, onClose, onDone, showToast }) {
   const [form, setForm] = useState({
     name: product.name, price: product.price.toString(),
     stock: product.stock !== null ? product.stock.toString() : '',
-    image: product.image || '', trackStock: product.stock !== null, category: product.category || 'diger',
+    image: product.image || '', category: product.category || 'diger',
   });
   const [busy, setBusy] = useState(false);
 
@@ -1013,10 +1004,9 @@ function ProductEditModal({ product, onClose, onDone, showToast }) {
     if (!form.name.trim() || !form.price) { showToast('İsim ve fiyat zorunlu', 'error'); return; }
     const price = parseFloat(form.price);
     if (isNaN(price) || price < 0) { showToast('Geçerli bir fiyat girin', 'error'); return; }
-    const stock = form.trackStock ? parseInt(form.stock) || 0 : null;
     setBusy(true);
     try {
-      await api('/api/products', { method: 'PUT', body: JSON.stringify({ id: product.id, name: form.name, price, stock, image: form.image, category: form.category }) });
+      await api('/api/products', { method: 'PUT', body: JSON.stringify({ id: product.id, name: form.name, price, stock: null, image: form.image, category: form.category }) });
       showToast('Ürün güncellendi'); onDone();
     } catch (e) { showToast(e.message, 'error'); }
     setBusy(false);
@@ -1058,17 +1048,6 @@ function ProductEditModal({ product, onClose, onDone, showToast }) {
               ))}
             </div>
           </div>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.trackStock} onChange={e => setForm({ ...form, trackStock: e.target.checked })}
-              className="w-4 h-4 accent-indigo-500" />
-            <span className="text-sm text-gray-500">Stok takibi yap</span>
-          </label>
-          {form.trackStock && (
-            <div>
-              <label className="text-xs font-semibold text-gray-500 block mb-1.5">Stok adedi</label>
-              <input type="number" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} className="input" />
-            </div>
-          )}
           <div>
             <label className="text-xs font-semibold text-gray-500 block mb-1.5">Ürün görseli</label>
             {form.image && (
@@ -1094,7 +1073,7 @@ function ProductEditModal({ product, onClose, onDone, showToast }) {
 function ProductsTab({ products, refresh, showToast }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null); // product object or null
-  const [addForm, setAddForm] = useState({ name: '', price: '', stock: '', image: '', trackStock: true, category: 'diger' });
+  const [addForm, setAddForm] = useState({ name: '', price: '', image: '', category: 'diger' });
   const [addBusy, setAddBusy] = useState(false);
 
   const handleAddImageUpload = (e) => {
@@ -1110,10 +1089,9 @@ function ProductsTab({ products, refresh, showToast }) {
     if (!addForm.name.trim() || !addForm.price) { showToast('İsim ve fiyat zorunlu', 'error'); return; }
     const price = parseFloat(addForm.price);
     if (isNaN(price) || price < 0) { showToast('Geçerli bir fiyat girin', 'error'); return; }
-    const stock = addForm.trackStock ? parseInt(addForm.stock) || 0 : null;
     setAddBusy(true);
     try {
-      await api('/api/products', { method: 'POST', body: JSON.stringify({ name: addForm.name, price, stock, image: addForm.image, category: addForm.category }) });
+      await api('/api/products', { method: 'POST', body: JSON.stringify({ name: addForm.name, price, stock: null, image: addForm.image, category: addForm.category }) });
       showToast('Ürün eklendi'); setAdding(false); await refresh();
     } catch (e) { showToast(e.message, 'error'); }
     setAddBusy(false);
@@ -1122,11 +1100,6 @@ function ProductsTab({ products, refresh, showToast }) {
   const remove = async (p) => {
     if (!confirm(`${p.name} silinsin mi?`)) return;
     try { await api(`/api/products?id=${p.id}`, { method: 'DELETE' }); showToast('Ürün silindi'); await refresh(); }
-    catch (e) { showToast(e.message, 'error'); }
-  };
-
-  const adjustStock = async (p, delta) => {
-    try { await api('/api/products', { method: 'PATCH', body: JSON.stringify({ id: p.id, delta }) }); await refresh(); }
     catch (e) { showToast(e.message, 'error'); }
   };
 
@@ -1141,10 +1114,10 @@ function ProductsTab({ products, refresh, showToast }) {
     <div>
       <div className="flex justify-between items-center mb-4 mt-1">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Ürünler & Stok</h2>
+          <h2 className="text-xl font-bold text-gray-800">Ürünler</h2>
           <p className="text-xs text-gray-500">{products.length} ürün</p>
         </div>
-        <button onClick={() => { setAdding(true); setAddForm({ name: '', price: '', stock: '', image: '', trackStock: true, category: 'diger' }); }}
+        <button onClick={() => { setAdding(true); setAddForm({ name: '', price: '', image: '', category: 'diger' }); }}
           className="btn-primary flex items-center gap-2">
           <Plus className="w-4 h-4" /> Yeni Ürün
         </button>
@@ -1179,17 +1152,6 @@ function ProductsTab({ products, refresh, showToast }) {
                   ))}
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={addForm.trackStock} onChange={e => setAddForm({ ...addForm, trackStock: e.target.checked })}
-                  className="w-4 h-4 accent-indigo-500" />
-                <span className="text-sm text-gray-500">Stok takibi yap</span>
-              </label>
-              {addForm.trackStock && (
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 block mb-1.5">Stok adedi</label>
-                  <input type="number" value={addForm.stock} onChange={e => setAddForm({ ...addForm, stock: e.target.value })} className="input" />
-                </div>
-              )}
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-500 block mb-1.5">Ürün görseli</label>
@@ -1228,71 +1190,37 @@ function ProductsTab({ products, refresh, showToast }) {
                 <span className="text-xs text-gray-400">{cat.items.length} ürün</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {cat.items.map(p => {
-                  const lowStock = p.stock !== null && p.stock <= 5;
-                  const outOfStock = p.stock !== null && p.stock <= 0;
-                  return (
-                    <div key={p.id} className="card overflow-hidden flex flex-col">
-                      <>
-                        <div className="relative" style={{ paddingBottom: '100%' }}>
-                          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                            {p.image ? (
-                              <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Package className="w-10 h-10 text-gray-300" />
-                              </div>
-                            )}
+                {cat.items.map(p => (
+                  <div key={p.id} className="card overflow-hidden flex flex-col">
+                    <div className="relative" style={{ paddingBottom: '100%' }}>
+                      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                        {p.image ? (
+                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-10 h-10 text-gray-300" />
                           </div>
-                          <div className="absolute top-2 right-2 flex gap-1">
-                            <button onClick={() => setEditing(p)}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                              style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button onClick={() => remove(p)}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                              style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                            {outOfStock && (
-                              <div className="absolute inset-0 flex items-center justify-center"
-                                style={{ background: 'rgba(0,0,0,0.45)' }}>
-                                <span className="text-white text-xs font-bold px-2 py-1 rounded-lg"
-                                  style={{ background: 'rgba(239,68,68,0.9)' }}>Tükendi</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="p-3 flex flex-col flex-1">
-                            <p className="font-bold text-gray-800 text-sm truncate">{p.name}</p>
-                            <p className="text-indigo-600 font-bold text-sm mb-2">{fmtTL(p.price)}</p>
-                            {p.stock !== null ? (
-                              <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
-                                <button onClick={() => adjustStock(p, -1)}
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center"
-                                  style={{ background: 'rgba(0,0,0,0.07)', color: '#6b7280' }}>
-                                  <Minus className="w-3 h-3" />
-                                </button>
-                                <span className="text-sm font-bold flex items-center gap-1"
-                                  style={{ color: outOfStock ? '#f87171' : lowStock ? '#fb923c' : '#9ca3af' }}>
-                                  {(lowStock || outOfStock) && <AlertTriangle className="w-3 h-3" />}
-                                  {p.stock} adet
-                                </span>
-                                <button onClick={() => adjustStock(p, 1)}
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center"
-                                  style={{ background: 'rgba(0,0,0,0.07)', color: '#6b7280' }}>
-                                  <Plus className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ) : (
-                              <p className="text-xs text-gray-400 mt-auto pt-2 border-t" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>Stok takibi yok</p>
-                            )}
-                          </div>
-                        </>
+                        )}
+                      </div>
+                      <div className="absolute top-2 right-2 flex gap-1">
+                        <button onClick={() => setEditing(p)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                          style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => remove(p)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                          style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  );
-                })}
+                    <div className="p-3">
+                      <p className="font-bold text-gray-800 text-sm truncate">{p.name}</p>
+                      <p className="text-indigo-600 font-bold text-sm">{fmtTL(p.price)}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
