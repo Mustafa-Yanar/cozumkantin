@@ -285,7 +285,7 @@ function CustomerLogin({ onLogin, onBack, showToast }) {
 
 // ========== OWNER PANEL ==========
 function OwnerPanel({ onLogout, showToast }) {
-  const [tab, setTab] = useState('sale');
+  const [tab, setTab] = useState('customers');
   const [data, setData] = useState({ products: [], customers: [], txns: [], payments: [] });
   const [loading, setLoading] = useState(true);
 
@@ -309,7 +309,6 @@ function OwnerPanel({ onLogout, showToast }) {
   const lowStock = data.products.filter(p => p.stock !== null && p.stock <= 5).length;
 
   const tabs = [
-    { id: 'sale', label: 'Satış Yap', icon: ShoppingBag },
     { id: 'customers', label: 'Müşteriler', icon: Users },
     { id: 'products', label: 'Ürünler', icon: Package, badge: lowStock > 0 ? lowStock : null },
   ];
@@ -361,7 +360,6 @@ function OwnerPanel({ onLogout, showToast }) {
           </div>
         ) : (
           <>
-            {tab === 'sale' && <SaleTab data={data} customerBalance={customerBalance} refresh={refresh} showToast={showToast} />}
             {tab === 'customers' && <CustomersTab data={data} customerBalance={customerBalance} refresh={refresh} showToast={showToast} />}
             {tab === 'products' && <ProductsTab products={data.products} refresh={refresh} showToast={showToast} />}
           </>
@@ -377,266 +375,14 @@ function OwnerPanel({ onLogout, showToast }) {
   );
 }
 
-// ========== SALE TAB ==========
-function SaleTab({ data, customerBalance, refresh, showToast }) {
-  const { products, customers } = data;
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [search, setSearch] = useState('');
-  const [paymentMode, setPaymentMode] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const filteredProducts = useMemo(() => {
-    const q = search.toLowerCase();
-    return products.filter(p => p.name.toLowerCase().includes(q));
-  }, [products, search]);
-
-  const cartTotal = cart.reduce((s, item) => {
-    const p = products.find(p => p.id === item.productId);
-    return s + (p ? p.price * item.qty : 0);
-  }, 0);
-
-  const addToCart = (product) => {
-    if (product.stock !== null && product.stock <= 0) { showToast('Stok yok!', 'error'); return; }
-    const existing = cart.find(i => i.productId === product.id);
-    if (existing) {
-      if (product.stock !== null && existing.qty >= product.stock) { showToast('Stok yetersiz', 'error'); return; }
-      setCart(cart.map(i => i.productId === product.id ? { ...i, qty: i.qty + 1 } : i));
-    } else {
-      setCart([...cart, { productId: product.id, qty: 1, note: '' }]);
-    }
-  };
-
-  const updateQty = (productId, delta) =>
-    setCart(cart.map(i => i.productId === productId ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
-
-  const removeFromCart = (productId) => setCart(cart.filter(i => i.productId !== productId));
-  const updateNote = (productId, note) => setCart(cart.map(i => i.productId === productId ? { ...i, note } : i));
-
-  const completeSale = async () => {
-    if (!selectedCustomer || cart.length === 0) return;
-    setBusy(true);
-    try {
-      await api('/api/transactions', {
-        method: 'POST',
-        body: JSON.stringify({ customerId: selectedCustomer.id, items: cart.map(i => ({ productId: i.productId, qty: i.qty, note: i.note })) }),
-      });
-      showToast(`${fmtTL(cartTotal)} veresiyeye kaydedildi`);
-      setCart([]); setSelectedCustomer(null);
-      await refresh();
-    } catch (e) { showToast(e.message, 'error'); }
-    setBusy(false);
-  };
-
-  const recordPayment = async () => {
-    const amt = parseFloat(paymentAmount);
-    if (!selectedCustomer || !amt || amt <= 0) return;
-    setBusy(true);
-    try {
-      await api('/api/payments', { method: 'POST', body: JSON.stringify({ customerId: selectedCustomer.id, amount: amt }) });
-      showToast(`${fmtTL(amt)} ödeme kaydedildi`);
-      setPaymentAmount(''); setPaymentMode(false); setSelectedCustomer(null);
-      await refresh();
-    } catch (e) { showToast(e.message, 'error'); }
-    setBusy(false);
-  };
-
-  if (customers.length === 0) return (
-    <div className="card p-12 text-center mt-4">
-      <Users className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-      <h3 className="text-lg font-bold text-gray-800 mb-1">Henüz müşteri yok</h3>
-      <p className="text-gray-500 text-sm">Önce "Müşteriler" sekmesinden müşteri ekleyin.</p>
-    </div>
-  );
-
-  if (products.length === 0) return (
-    <div className="card p-12 text-center mt-4">
-      <Package className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-      <h3 className="text-lg font-bold text-gray-800 mb-1">Henüz ürün yok</h3>
-      <p className="text-gray-500 text-sm">Önce "Ürünler" sekmesinden ürün ekleyin.</p>
-    </div>
-  );
-
-  return (
-    <div className="grid lg:grid-cols-3 gap-4">
-      <div className="lg:col-span-1 space-y-3">
-        <div className="card p-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Müşteri Seç</p>
-          {!selectedCustomer ? (
-            <div className="max-h-64 overflow-y-auto space-y-2">
-              {customers.map(c => {
-                const bal = customerBalance(c.id);
-                return (
-                  <button key={c.id} onClick={() => setSelectedCustomer(c)}
-                    className="w-full text-left px-3 py-2.5 rounded-xl border transition-all hover:border-indigo-500/40 hover:bg-indigo-500/5"
-                    style={{ borderColor: 'rgba(0,0,0,0.07)', background: 'rgba(0,0,0,0.03)' }}>
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-sm text-gray-800">{c.name}</span>
-                      <span className="text-sm font-bold" style={{ color: bal > 0 ? '#f87171' : '#4ade80' }}>{fmtTL(bal)}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-xl p-4" style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', boxShadow: '0 4px 16px rgba(99,102,241,0.3)' }}>
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <p className="text-xs text-indigo-200 mb-0.5">Seçili müşteri</p>
-                  <p className="font-bold text-gray-800 text-base">{selectedCustomer.name}</p>
-                  <p className="text-sm text-indigo-200">Borç: {fmtTL(customerBalance(selectedCustomer.id))}</p>
-                </div>
-                <button onClick={() => { setSelectedCustomer(null); setCart([]); setPaymentMode(false); }}
-                  className="text-indigo-200 hover:text-gray-800">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => setPaymentMode(false)}
-                  className="flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all"
-                  style={{ background: !paymentMode ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.08)', color: !paymentMode ? '#4f46e5' : 'white' }}>
-                  Satış
-                </button>
-                <button onClick={() => setPaymentMode(true)}
-                  className="flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all"
-                  style={{ background: paymentMode ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.08)', color: paymentMode ? '#4f46e5' : 'white' }}>
-                  Ödeme Al
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {selectedCustomer && !paymentMode && (
-          <div className="card p-4 animate-slide-in">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sepet</p>
-            {cart.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">Sağdan ürün ekleyin →</p>
-            ) : (
-              <>
-                <div className="space-y-3 mb-4 max-h-72 overflow-y-auto">
-                  {cart.map(item => {
-                    const p = products.find(p => p.id === item.productId);
-                    if (!p) return null;
-                    return (
-                      <div key={item.productId} className="pb-3 border-b" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
-                        <div className="flex justify-between items-center mb-2">
-                          <p className="font-semibold text-sm text-gray-800">{p.name}</p>
-                          <button onClick={() => removeFromCart(item.productId)} className="text-gray-400 hover:text-red-400 transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => updateQty(item.productId, -1)}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 transition-colors hover:bg-white/10"
-                              style={{ background: 'rgba(0,0,0,0.07)' }}>
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <span className="font-bold text-sm text-gray-800 w-5 text-center">{item.qty}</span>
-                            <button onClick={() => updateQty(item.productId, 1)}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 transition-colors hover:bg-white/10"
-                              style={{ background: 'rgba(0,0,0,0.07)' }}>
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
-                          <span className="text-sm font-bold text-indigo-600">{fmtTL(p.price * item.qty)}</span>
-                        </div>
-                        <input value={item.note} onChange={(e) => updateNote(item.productId, e.target.value)}
-                          placeholder="Not ekle..."
-                          className="input text-xs py-1.5" />
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-between items-center mb-3 pt-2">
-                  <span className="text-sm font-semibold text-gray-500">Toplam</span>
-                  <span className="text-xl font-extrabold text-gray-800">{fmtTL(cartTotal)}</span>
-                </div>
-                <button onClick={completeSale} disabled={busy} className="btn-success w-full py-3">
-                  {busy ? '...' : 'Veresiyeye Yaz'}
-                </button>
-              </>
-            )}
-          </div>
-        )}
-
-        {selectedCustomer && paymentMode && (
-          <div className="card p-4 animate-slide-in">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Nakit Ödeme</p>
-            <p className="text-sm text-gray-500 mb-3">
-              Mevcut borç: <span className="text-red-400 font-bold">{fmtTL(customerBalance(selectedCustomer.id))}</span>
-            </p>
-            <input type="number" step="0.01" value={paymentAmount}
-              onChange={(e) => setPaymentAmount(e.target.value)}
-              placeholder="Ödeme tutarı (₺)" className="input mb-3" autoFocus />
-            <button onClick={() => setPaymentAmount(customerBalance(selectedCustomer.id).toFixed(2))}
-              className="btn-ghost w-full mb-3 text-sm">
-              Tüm Borcu Kapat
-            </button>
-            <button onClick={recordPayment} disabled={busy} className="btn-success w-full py-3">
-              {busy ? '...' : 'Ödemeyi Kaydet'}
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="lg:col-span-2">
-        <div className="card p-4">
-          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Ürünler</p>
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)}
-                placeholder="Ürün ara..." className="input pl-9 py-2 text-sm w-44" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {filteredProducts.map(p => {
-              const outOfStock = p.stock !== null && p.stock <= 0;
-              const canAdd = selectedCustomer && !paymentMode && !outOfStock;
-              return (
-                <button key={p.id} onClick={() => canAdd && addToCart(p)} disabled={!canAdd}
-                  className="text-left rounded-xl overflow-hidden transition-all hover:scale-[1.02] disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.07)' }}>
-                  <div className="aspect-square overflow-hidden" style={{ background: 'rgba(0,0,0,0.05)' }}>
-                    {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-10 h-10 text-gray-300" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2.5">
-                    <p className="font-semibold text-sm text-gray-800 leading-tight truncate">{p.name}</p>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="font-bold text-sm text-indigo-600">{fmtTL(p.price)}</span>
-                      {p.stock !== null && (
-                        <span className="text-xs" style={{ color: outOfStock ? '#f87171' : p.stock <= 5 ? '#fb923c' : '#6b7280' }}>
-                          {p.stock} adet
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          {filteredProducts.length === 0 && (
-            <p className="text-center py-10 text-gray-400 text-sm">Ürün bulunamadı</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ========== CUSTOMERS TAB ==========
 function CustomersTab({ data, customerBalance, refresh, showToast }) {
-  const { customers, txns, payments } = data;
+  const { customers, txns, payments, products } = data;
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
+  const [saleCustomer, setSaleCustomer] = useState(null);
+  const [paymentCustomer, setPaymentCustomer] = useState(null);
   const [form, setForm] = useState({ name: '', password: '' });
   const [busy, setBusy] = useState(false);
 
@@ -708,7 +454,7 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
           const cTxns = txns.filter(t => t.customerId === c.id);
           const cPays = payments.filter(p => p.customerId === c.id);
           return (
-            <div key={c.id} className="card p-4 hover:border-white/10 transition-colors">
+            <div key={c.id} className="card p-4 transition-colors">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <p className="font-bold text-gray-800">{c.name}</p>
@@ -720,18 +466,30 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
                     <Eye className="w-4 h-4" />
                   </button>
                   <button onClick={() => startEdit(c)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-white/10 transition-all">
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-all">
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button onClick={() => remove(c)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-400 hover:bg-red-50 transition-all">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              <div className="pt-3 border-t flex justify-between items-center" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
+              <div className="pt-3 border-t mb-3 flex justify-between items-center" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
                 <span className="text-xs text-gray-500">Borç</span>
-                <span className="text-2xl font-extrabold" style={{ color: bal > 0 ? '#f87171' : '#4ade80' }}>{fmtTL(bal)}</span>
+                <span className="text-2xl font-extrabold" style={{ color: bal > 0 ? '#ef4444' : '#22c55e' }}>{fmtTL(bal)}</span>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setSaleCustomer(c)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all"
+                  style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', color: 'white', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
+                  <ShoppingBag className="w-3.5 h-3.5" /> Satış
+                </button>
+                <button onClick={() => setPaymentCustomer(c)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all"
+                  style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)', color: 'white', boxShadow: '0 2px 8px rgba(34,197,94,0.3)' }}>
+                  <Wallet className="w-3.5 h-3.5" /> Ödeme Al
+                </button>
               </div>
             </div>
           );
@@ -754,6 +512,228 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
           onClose={() => setViewing(null)}
         />
       )}
+
+      {saleCustomer && (
+        <SaleModal
+          customer={saleCustomer}
+          products={products}
+          customerBalance={customerBalance}
+          onClose={() => setSaleCustomer(null)}
+          onDone={() => { setSaleCustomer(null); refresh(); }}
+          showToast={showToast}
+        />
+      )}
+
+      {paymentCustomer && (
+        <PaymentModal
+          customer={paymentCustomer}
+          customerBalance={customerBalance}
+          onClose={() => setPaymentCustomer(null)}
+          onDone={() => { setPaymentCustomer(null); refresh(); }}
+          showToast={showToast}
+        />
+      )}
+    </div>
+  );
+}
+
+// ========== SALE MODAL ==========
+function SaleModal({ customer, products, customerBalance, onClose, onDone, showToast }) {
+  const [cart, setCart] = useState([]);
+  const [search, setSearch] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return products.filter(p => p.name.toLowerCase().includes(q));
+  }, [products, search]);
+
+  const cartTotal = cart.reduce((s, item) => {
+    const p = products.find(p => p.id === item.productId);
+    return s + (p ? p.price * item.qty : 0);
+  }, 0);
+
+  const addToCart = (product) => {
+    if (product.stock !== null && product.stock <= 0) { showToast('Stok yok!', 'error'); return; }
+    const existing = cart.find(i => i.productId === product.id);
+    if (existing) {
+      if (product.stock !== null && existing.qty >= product.stock) { showToast('Stok yetersiz', 'error'); return; }
+      setCart(cart.map(i => i.productId === product.id ? { ...i, qty: i.qty + 1 } : i));
+    } else {
+      setCart([...cart, { productId: product.id, qty: 1, note: '' }]);
+    }
+  };
+
+  const updateQty = (productId, delta) =>
+    setCart(cart.map(i => i.productId === productId ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
+  const removeFromCart = (productId) => setCart(cart.filter(i => i.productId !== productId));
+  const updateNote = (productId, note) => setCart(cart.map(i => i.productId === productId ? { ...i, note } : i));
+
+  const completeSale = async () => {
+    if (cart.length === 0) return;
+    setBusy(true);
+    try {
+      await api('/api/transactions', {
+        method: 'POST',
+        body: JSON.stringify({ customerId: customer.id, items: cart.map(i => ({ productId: i.productId, qty: i.qty, note: i.note })) }),
+      });
+      showToast(`${fmtTL(cartTotal)} veresiyeye kaydedildi`);
+      onDone();
+    } catch (e) { showToast(e.message, 'error'); }
+    setBusy(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div className="card-elevated w-full sm:max-w-3xl max-h-[90vh] flex flex-col rounded-b-none sm:rounded-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
+          <div>
+            <h3 className="font-bold text-gray-800">{customer.name} — Satış</h3>
+            <p className="text-xs text-gray-500">Mevcut borç: <span className="text-red-500 font-semibold">{fmtTL(customerBalance(customer.id))}</span></p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="relative mb-3">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Ürün ara..." className="input pl-9 py-2 text-sm" />
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-3 gap-2">
+              {filtered.map(p => {
+                const outOfStock = p.stock !== null && p.stock <= 0;
+                return (
+                  <button key={p.id} onClick={() => !outOfStock && addToCart(p)} disabled={outOfStock}
+                    className="text-left rounded-xl overflow-hidden transition-all hover:scale-[1.02] disabled:opacity-40"
+                    style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.07)' }}>
+                    <div className="aspect-square overflow-hidden" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                      {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="w-8 h-8 text-gray-300" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2">
+                      <p className="font-semibold text-xs text-gray-800 truncate">{p.name}</p>
+                      <p className="text-indigo-600 font-bold text-xs">{fmtTL(p.price)}</p>
+                      {p.stock !== null && (
+                        <p className="text-xs" style={{ color: outOfStock ? '#ef4444' : p.stock <= 5 ? '#f97316' : '#9ca3af' }}>
+                          {p.stock} adet
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {filtered.length === 0 && <p className="text-center py-8 text-gray-400 text-sm">Ürün bulunamadı</p>}
+          </div>
+
+          <div className="sm:w-64 border-t sm:border-t-0 sm:border-l p-4 flex flex-col" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sepet</p>
+            {cart.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6 flex-1">Ürün seçin ←</p>
+            ) : (
+              <>
+                <div className="flex-1 overflow-y-auto space-y-3 mb-3">
+                  {cart.map(item => {
+                    const p = products.find(p => p.id === item.productId);
+                    if (!p) return null;
+                    return (
+                      <div key={item.productId} className="pb-3 border-b" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <p className="font-semibold text-xs text-gray-800 flex-1 truncate">{p.name}</p>
+                          <button onClick={() => removeFromCart(item.productId)} className="text-gray-300 hover:text-red-400 ml-1">
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <button onClick={() => updateQty(item.productId, -1)}
+                              className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-500"
+                              style={{ background: 'rgba(0,0,0,0.07)' }}>
+                              <Minus className="w-2.5 h-2.5" />
+                            </button>
+                            <span className="font-bold text-xs text-gray-800 w-4 text-center">{item.qty}</span>
+                            <button onClick={() => updateQty(item.productId, 1)}
+                              className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-500"
+                              style={{ background: 'rgba(0,0,0,0.07)' }}>
+                              <Plus className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                          <span className="text-xs font-bold text-indigo-600">{fmtTL(p.price * item.qty)}</span>
+                        </div>
+                        <input value={item.note} onChange={e => updateNote(item.productId, e.target.value)}
+                          placeholder="Not..." className="input text-xs py-1" />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between items-center mb-3 pt-2 border-t" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
+                  <span className="text-sm font-semibold text-gray-500">Toplam</span>
+                  <span className="text-lg font-extrabold text-gray-800">{fmtTL(cartTotal)}</span>
+                </div>
+                <button onClick={completeSale} disabled={busy} className="btn-success w-full py-2.5">
+                  {busy ? '...' : 'Veresiyeye Yaz'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== PAYMENT MODAL ==========
+function PaymentModal({ customer, customerBalance, onClose, onDone, showToast }) {
+  const [amount, setAmount] = useState('');
+  const [busy, setBusy] = useState(false);
+  const bal = customerBalance(customer.id);
+
+  const recordPayment = async () => {
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0) return;
+    setBusy(true);
+    try {
+      await api('/api/payments', { method: 'POST', body: JSON.stringify({ customerId: customer.id, amount: amt }) });
+      showToast(`${fmtTL(amt)} ödeme kaydedildi`);
+      onDone();
+    } catch (e) { showToast(e.message, 'error'); }
+    setBusy(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div className="card-elevated w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="font-bold text-gray-800">{customer.name}</h3>
+            <p className="text-xs text-gray-500">Nakit Ödeme</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="rounded-xl p-4 mb-5 text-center" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
+          <p className="text-xs text-gray-500 mb-1">Mevcut Borç</p>
+          <p className="text-3xl font-extrabold" style={{ color: '#ef4444' }}>{fmtTL(bal)}</p>
+        </div>
+
+        <input type="number" step="0.01" value={amount}
+          onChange={e => setAmount(e.target.value)}
+          placeholder="Ödeme tutarı (₺)" className="input mb-3" autoFocus />
+        <button onClick={() => setAmount(bal.toFixed(2))}
+          className="btn-ghost w-full mb-3 text-sm">
+          Tüm Borcu Kapat ({fmtTL(bal)})
+        </button>
+        <button onClick={recordPayment} disabled={busy || !amount} className="btn-success w-full py-3">
+          {busy ? '...' : 'Ödemeyi Kaydet'}
+        </button>
+      </div>
     </div>
   );
 }
