@@ -449,7 +449,13 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
       )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {customers.map(c => {
+        {[...customers].sort((a, b) => {
+          const aPin = a.name.toLowerCase().startsWith('çözüm kurum');
+          const bPin = b.name.toLowerCase().startsWith('çözüm kurum');
+          if (aPin && !bPin) return -1;
+          if (!aPin && bPin) return 1;
+          return customerBalance(b.id) - customerBalance(a.id);
+        }).map(c => {
           const bal = customerBalance(c.id);
           const cTxns = txns.filter(t => t.customerId === c.id);
           const cPays = payments.filter(p => p.customerId === c.id);
