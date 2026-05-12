@@ -376,12 +376,59 @@ function OwnerPanel({ onLogout, showToast }) {
 }
 
 // ========== CUSTOMERS TAB ==========
+function CustomerEditModal({ customer, onClose, onDone, showToast }) {
+  const [form, setForm] = useState({ name: customer.name, password: customer.password });
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!form.name.trim() || !form.password.trim()) { showToast('Tüm alanları doldurun', 'error'); return; }
+    setBusy(true);
+    try {
+      await api('/api/customers', { method: 'PUT', body: JSON.stringify({ id: customer.id, name: form.name, username: form.name, password: form.password }) });
+      showToast('Müşteri güncellendi'); onDone();
+    } catch (e) { showToast(e.message, 'error'); }
+    setBusy(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div className="card-elevated w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="font-bold text-gray-800">Müşteriyi Düzenle</h3>
+            <p className="text-xs text-gray-500">{customer.name}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="space-y-3 mb-5">
+          <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1.5">Müşteri adı</label>
+            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+              placeholder="Müşteri adı" className="input" autoFocus />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1.5">Şifre</label>
+            <input value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+              onKeyDown={e => e.key === 'Enter' && submit()}
+              placeholder="Şifre" className="input" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={submit} disabled={busy} className="btn-success flex-1 flex items-center justify-center gap-2 py-3 disabled:opacity-60">
+            <Save className="w-4 h-4" /> Kaydet
+          </button>
+          <button onClick={onClose} className="btn-ghost px-5">İptal</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CustomersTab({ data, customerBalance, refresh, showToast }) {
   const { customers, txns, payments, products } = data;
   const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', password: '' });
-  const [editBusy, setEditBusy] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
   const [addForm, setAddForm] = useState({ name: '', password: '' });
   const [addBusy, setAddBusy] = useState(false);
   const [viewing, setViewing] = useState(null);
@@ -390,20 +437,7 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
 
   const startAdd = () => {
     if (customers.length >= 20) { showToast('En fazla 20 müşteri eklenebilir', 'error'); return; }
-    setAdding(true); setEditing(null); setAddForm({ name: '', password: '' });
-  };
-
-  const startEdit = (c) => { setEditing(c.id); setAdding(false); setEditForm({ name: c.name, password: c.password }); };
-  const cancelEdit = () => setEditing(null);
-
-  const submitEdit = async (c) => {
-    if (!editForm.name.trim() || !editForm.password.trim()) { showToast('Tüm alanları doldurun', 'error'); return; }
-    setEditBusy(true);
-    try {
-      await api('/api/customers', { method: 'PUT', body: JSON.stringify({ id: c.id, name: editForm.name, username: editForm.name, password: editForm.password }) });
-      showToast('Müşteri güncellendi'); setEditing(null); await refresh();
-    } catch (e) { showToast(e.message, 'error'); }
-    setEditBusy(false);
+    setAdding(true); setAddForm({ name: '', password: '' });
   };
 
   const submitAdd = async () => {
@@ -448,9 +482,9 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
         <div className="card p-5 mb-4 animate-slide-in">
           <p className="text-sm font-bold text-gray-800 mb-3">Yeni Müşteri</p>
           <div className="grid sm:grid-cols-2 gap-3">
-            <input value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+            <input value={addForm.name} onChange={e => setAddForm({ ...addForm, name: e.target.value })}
               placeholder="Müşteri adı" className="input" autoFocus />
-            <input value={addForm.password} onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
+            <input value={addForm.password} onChange={e => setAddForm({ ...addForm, password: e.target.value })}
               placeholder="Şifre" className="input" />
           </div>
           <div className="flex gap-2 mt-3">
@@ -467,65 +501,44 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
           const bal = customerBalance(c.id);
           const cTxns = txns.filter(t => t.customerId === c.id);
           const cPays = payments.filter(p => p.customerId === c.id);
-          const isEditing = editing === c.id;
           return (
             <div key={c.id} className="card p-4 transition-colors">
-              {isEditing ? (
-                <div className="animate-slide-in">
-                  <p className="text-sm font-bold text-gray-800 mb-3">Düzenle</p>
-                  <div className="space-y-2 mb-3">
-                    <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      placeholder="Müşteri adı" className="input" autoFocus />
-                    <input value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                      placeholder="Şifre" className="input" />
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => submitEdit(c)} disabled={editBusy} className="btn-success flex items-center gap-2 text-sm py-2 disabled:opacity-60">
-                      <Save className="w-3.5 h-3.5" /> Kaydet
-                    </button>
-                    <button onClick={cancelEdit} className="btn-ghost text-sm py-2">İptal</button>
-                  </div>
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="font-bold text-gray-800">{c.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{cTxns.length} alışveriş · {cPays.length} ödeme</p>
                 </div>
-              ) : (
-                <>
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className="font-bold text-gray-800">{c.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{cTxns.length} alışveriş · {cPays.length} ödeme</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <button onClick={() => setViewing(c)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-indigo-600 hover:bg-indigo-500/10 transition-all">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => startEdit(c)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-all">
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => remove(c)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-400 hover:bg-red-50 transition-all">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="pt-3 border-t mb-3 flex justify-between items-center" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
-                    <span className="text-xs text-gray-500">Borç</span>
-                    <span className="text-2xl font-extrabold" style={{ color: bal > 0 ? '#ef4444' : '#22c55e' }}>{fmtTL(bal)}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => setSaleCustomer(c)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all"
-                      style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', color: 'white', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
-                      <ShoppingBag className="w-3.5 h-3.5" /> Satış
-                    </button>
-                    <button onClick={() => setPaymentCustomer(c)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all"
-                      style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)', color: 'white', boxShadow: '0 2px 8px rgba(34,197,94,0.3)' }}>
-                      <Wallet className="w-3.5 h-3.5" /> Ödeme Al
-                    </button>
-                  </div>
-                </>
-              )}
+                <div className="flex gap-1">
+                  <button onClick={() => setViewing(c)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-indigo-600 hover:bg-indigo-500/10 transition-all">
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setEditingCustomer(c)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-all">
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => remove(c)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-400 hover:bg-red-50 transition-all">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="pt-3 border-t mb-3 flex justify-between items-center" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
+                <span className="text-xs text-gray-500">Borç</span>
+                <span className="text-2xl font-extrabold" style={{ color: bal > 0 ? '#ef4444' : '#22c55e' }}>{fmtTL(bal)}</span>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setSaleCustomer(c)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all"
+                  style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', color: 'white', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
+                  <ShoppingBag className="w-3.5 h-3.5" /> Satış
+                </button>
+                <button onClick={() => setPaymentCustomer(c)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all"
+                  style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)', color: 'white', boxShadow: '0 2px 8px rgba(34,197,94,0.3)' }}>
+                  <Wallet className="w-3.5 h-3.5" /> Ödeme Al
+                </button>
+              </div>
             </div>
           );
         })}
@@ -537,6 +550,15 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
           <h3 className="text-lg font-bold text-gray-800 mb-1">Henüz müşteri yok</h3>
           <p className="text-gray-500 text-sm">"Yeni Müşteri" ile başlayın</p>
         </div>
+      )}
+
+      {editingCustomer && (
+        <CustomerEditModal
+          customer={editingCustomer}
+          onClose={() => setEditingCustomer(null)}
+          onDone={async () => { setEditingCustomer(null); await refresh(); }}
+          showToast={showToast}
+        />
       )}
 
       {viewing && (
@@ -881,11 +903,11 @@ const CATEGORIES = [
   { id: 'diger', label: 'Diğer', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
 ];
 
-function ProductEditForm({ p, onSave, onCancel, showToast }) {
+function ProductEditModal({ product, onClose, onDone, showToast }) {
   const [form, setForm] = useState({
-    name: p.name, price: p.price.toString(),
-    stock: p.stock !== null ? p.stock.toString() : '',
-    image: p.image || '', trackStock: p.stock !== null, category: p.category || 'diger',
+    name: product.name, price: product.price.toString(),
+    stock: product.stock !== null ? product.stock.toString() : '',
+    image: product.image || '', trackStock: product.stock !== null, category: product.category || 'diger',
   });
   const [busy, setBusy] = useState(false);
 
@@ -905,53 +927,76 @@ function ProductEditForm({ p, onSave, onCancel, showToast }) {
     const stock = form.trackStock ? parseInt(form.stock) || 0 : null;
     setBusy(true);
     try {
-      await api('/api/products', { method: 'PUT', body: JSON.stringify({ id: p.id, name: form.name, price, stock, image: form.image, category: form.category }) });
-      showToast('Ürün güncellendi'); onSave();
+      await api('/api/products', { method: 'PUT', body: JSON.stringify({ id: product.id, name: form.name, price, stock, image: form.image, category: form.category }) });
+      showToast('Ürün güncellendi'); onDone();
     } catch (e) { showToast(e.message, 'error'); }
     setBusy(false);
   };
 
   return (
-    <div className="p-3 animate-slide-in">
-      <div className="space-y-2 mb-3">
-        <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-          placeholder="Ürün adı" className="input text-sm" autoFocus />
-        <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
-          placeholder="Fiyat (₺)" className="input text-sm" />
-        <div className="grid grid-cols-2 gap-1.5">
-          {CATEGORIES.map(cat => (
-            <button key={cat.id} type="button" onClick={() => setForm({ ...form, category: cat.id })}
-              className="py-1.5 px-2 rounded-lg text-xs font-semibold text-left transition-all border"
-              style={{
-                background: form.category === cat.id ? cat.bg : 'transparent',
-                borderColor: form.category === cat.id ? cat.color : 'rgba(0,0,0,0.1)',
-                color: form.category === cat.id ? cat.color : '#6b7280',
-              }}>
-              {cat.label}
-            </button>
-          ))}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div className="card-elevated w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="font-bold text-gray-800">Ürünü Düzenle</h3>
+            <p className="text-xs text-gray-500">{product.name}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X className="w-5 h-5" /></button>
         </div>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={form.trackStock} onChange={e => setForm({ ...form, trackStock: e.target.checked })}
-            className="w-4 h-4 accent-indigo-500" />
-          <span className="text-xs text-gray-500">Stok takibi</span>
-        </label>
-        {form.trackStock && (
-          <input type="number" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })}
-            placeholder="Stok adedi" className="input text-sm" />
-        )}
-        <div>
-          <input type="file" accept="image/*" onChange={handleImageUpload} className="text-xs text-gray-500 w-full" />
-          {form.image && (
-            <button onClick={() => setForm({ ...form, image: '' })} className="text-xs text-red-400 mt-1">Görseli kaldır</button>
+        <div className="space-y-3 mb-5">
+          <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1.5">Ürün adı</label>
+            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="input" autoFocus />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1.5">Fiyat (₺)</label>
+            <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="input" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1.5">Kategori</label>
+            <div className="grid grid-cols-2 gap-2">
+              {CATEGORIES.map(cat => (
+                <button key={cat.id} type="button" onClick={() => setForm({ ...form, category: cat.id })}
+                  className="py-2 px-3 rounded-xl text-xs font-semibold text-left transition-all border"
+                  style={{
+                    background: form.category === cat.id ? cat.bg : 'transparent',
+                    borderColor: form.category === cat.id ? cat.color : 'rgba(0,0,0,0.1)',
+                    color: form.category === cat.id ? cat.color : '#6b7280',
+                  }}>
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.trackStock} onChange={e => setForm({ ...form, trackStock: e.target.checked })}
+              className="w-4 h-4 accent-indigo-500" />
+            <span className="text-sm text-gray-500">Stok takibi yap</span>
+          </label>
+          {form.trackStock && (
+            <div>
+              <label className="text-xs font-semibold text-gray-500 block mb-1.5">Stok adedi</label>
+              <input type="number" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} className="input" />
+            </div>
           )}
+          <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1.5">Ürün görseli</label>
+            {form.image && (
+              <div className="w-20 h-20 rounded-xl overflow-hidden mb-2" style={{ border: '1px solid rgba(0,0,0,0.08)' }}>
+                <img src={form.image} alt="" className="w-full h-full object-cover" />
+              </div>
+            )}
+            <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm text-gray-500 w-full" />
+            {form.image && <button onClick={() => setForm({ ...form, image: '' })} className="text-xs text-red-400 mt-1">Görseli kaldır</button>}
+          </div>
         </div>
-      </div>
-      <div className="flex gap-2">
-        <button onClick={submit} disabled={busy} className="btn-success flex items-center gap-1.5 text-xs py-2 px-3 disabled:opacity-60">
-          <Save className="w-3.5 h-3.5" /> Kaydet
-        </button>
-        <button onClick={onCancel} className="btn-ghost text-xs py-2 px-3">İptal</button>
+        <div className="flex gap-2">
+          <button onClick={submit} disabled={busy} className="btn-success flex-1 flex items-center justify-center gap-2 py-3 disabled:opacity-60">
+            <Save className="w-4 h-4" /> Kaydet
+          </button>
+          <button onClick={onClose} className="btn-ghost px-5">İptal</button>
+        </div>
       </div>
     </div>
   );
@@ -959,7 +1004,7 @@ function ProductEditForm({ p, onSave, onCancel, showToast }) {
 
 function ProductsTab({ products, refresh, showToast }) {
   const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [editing, setEditing] = useState(null); // product object or null
   const [addForm, setAddForm] = useState({ name: '', price: '', stock: '', image: '', trackStock: true, category: 'diger' });
   const [addBusy, setAddBusy] = useState(false);
 
@@ -1010,7 +1055,7 @@ function ProductsTab({ products, refresh, showToast }) {
           <h2 className="text-xl font-bold text-gray-800">Ürünler & Stok</h2>
           <p className="text-xs text-gray-500">{products.length} ürün</p>
         </div>
-        <button onClick={() => { setAdding(true); setEditing(null); setAddForm({ name: '', price: '', stock: '', image: '', trackStock: true, category: 'diger' }); }}
+        <button onClick={() => { setAdding(true); setAddForm({ name: '', price: '', stock: '', image: '', trackStock: true, category: 'diger' }); }}
           className="btn-primary flex items-center gap-2">
           <Plus className="w-4 h-4" /> Yeni Ürün
         </button>
@@ -1097,40 +1142,31 @@ function ProductsTab({ products, refresh, showToast }) {
                 {cat.items.map(p => {
                   const lowStock = p.stock !== null && p.stock <= 5;
                   const outOfStock = p.stock !== null && p.stock <= 0;
-                  const isEditing = editing === p.id;
                   return (
                     <div key={p.id} className="card overflow-hidden flex flex-col">
-                      {isEditing ? (
-                        <ProductEditForm
-                          p={p}
-                          showToast={showToast}
-                          onSave={async () => { setEditing(null); await refresh(); }}
-                          onCancel={() => setEditing(null)}
-                        />
-                      ) : (
-                        <>
-                          <div className="relative" style={{ paddingBottom: '100%' }}>
-                            <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                              {p.image ? (
-                                <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Package className="w-10 h-10 text-gray-300" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="absolute top-2 right-2 flex gap-1">
-                              <button onClick={() => { setEditing(p.id); setAdding(false); }}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                                style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                              <button onClick={() => remove(p)}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                                style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
+                      <>
+                        <div className="relative" style={{ paddingBottom: '100%' }}>
+                          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                            {p.image ? (
+                              <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="w-10 h-10 text-gray-300" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="absolute top-2 right-2 flex gap-1">
+                            <button onClick={() => setEditing(p)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                              style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => remove(p)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                              style={{ background: 'rgba(255,255,255,0.9)', color: '#6b7280' }}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                             {outOfStock && (
                               <div className="absolute inset-0 flex items-center justify-center"
                                 style={{ background: 'rgba(0,0,0,0.45)' }}>
@@ -1165,7 +1201,6 @@ function ProductsTab({ products, refresh, showToast }) {
                             )}
                           </div>
                         </>
-                      )}
                     </div>
                   );
                 })}
@@ -1173,6 +1208,15 @@ function ProductsTab({ products, refresh, showToast }) {
             </div>
           ))}
         </div>
+      )}
+
+      {editing && (
+        <ProductEditModal
+          product={editing}
+          onClose={() => setEditing(null)}
+          onDone={async () => { setEditing(null); await refresh(); }}
+          showToast={showToast}
+        />
       )}
     </div>
   );
