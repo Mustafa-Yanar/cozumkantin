@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Coffee, Package, Users, LogOut, Plus, Minus, Trash2, Edit3, Save, X,
-  TrendingUp, FileDown, Search, ShoppingBag, Receipt, AlertTriangle,
-  Lock, User, Wallet, Clock, StickyNote, ChevronRight, BarChart3, Eye, EyeOff
+  Search, ShoppingBag, Receipt, AlertTriangle,
+  Lock, User, Wallet, Clock, StickyNote, ChevronRight, BarChart3, Eye, EyeOff, TrendingUp
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -363,7 +363,6 @@ function OwnerPanel({ onLogout, showToast }) {
             { id: 'sale', label: 'Satış Yap', icon: ShoppingBag },
             { id: 'customers', label: 'Müşteriler', icon: Users },
             { id: 'products', label: 'Ürünler / Stok', icon: Package, badge: lowStock > 0 ? lowStock : null },
-            { id: 'reports', label: 'Raporlar', icon: BarChart3 },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className="px-5 py-3 flex items-center gap-2 text-sm font-semibold whitespace-nowrap border-b-2 transition"
@@ -386,7 +385,6 @@ function OwnerPanel({ onLogout, showToast }) {
             {tab === 'sale' && <SaleTab data={data} customerBalance={customerBalance} refresh={refresh} showToast={showToast} />}
             {tab === 'customers' && <CustomersTab data={data} customerBalance={customerBalance} refresh={refresh} showToast={showToast} />}
             {tab === 'products' && <ProductsTab products={data.products} refresh={refresh} showToast={showToast} />}
-            {tab === 'reports' && <ReportsTab data={data} customerBalance={customerBalance} />}
           </>
         )}
       </main>
