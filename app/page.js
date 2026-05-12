@@ -321,13 +321,16 @@ function OwnerPanel({ onLogout, showToast }) {
             style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)' }}>
             <Coffee className="w-5 h-5 text-gray-800" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-base font-bold text-gray-800">Çözüm Kantin</h1>
             <p className="text-xs text-gray-500">
               Açık borç: <span className="text-indigo-600 font-semibold">{fmtTL(totalDebt)}</span>
               {' · '}{data.customers.length} müşteri{' · '}{data.products.length} ürün
             </p>
           </div>
+          <button onClick={onLogout} className="btn-ghost flex items-center gap-2 text-sm py-2">
+            <LogOut className="w-4 h-4" /> Çıkış Yap
+          </button>
         </div>
       </header>
 
@@ -365,12 +368,6 @@ function OwnerPanel({ onLogout, showToast }) {
           </>
         )}
       </main>
-
-      <footer className="border-t py-4 flex justify-center" style={{ borderColor: 'rgba(0,0,0,0.07)', background: '#ffffff' }}>
-        <button onClick={onLogout} className="btn-ghost flex items-center gap-2">
-          <LogOut className="w-4 h-4" /> Çıkış Yap
-        </button>
-      </footer>
     </div>
   );
 }
