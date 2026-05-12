@@ -63,7 +63,7 @@ export default function Page() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400 text-sm">Yükleniyor...</p>
+          <p className="text-gray-500 text-sm">Yükleniyor...</p>
         </div>
       </div>
     );
@@ -116,25 +116,25 @@ function Landing({ onPick, hasOwner }) {
           style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)', boxShadow: '0 8px 24px rgba(99,102,241,0.4)' }}>
           <Coffee className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-5xl font-extrabold mb-2 tracking-tight" style={{ color: '#f0f0f0' }}>
+        <h1 className="text-5xl font-extrabold mb-2 tracking-tight" style={{ color: '#1a1d2e' }}>
           Çözüm <span style={{ color: '#6366f1' }}>Kantin</span>
         </h1>
-        <p className="text-gray-400 text-base">Veresiye takip sistemi</p>
+        <p className="text-gray-500 text-base">Veresiye takip sistemi</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 w-full max-w-2xl">
         <button onClick={() => onPick('owner-login')}
           className="card p-7 text-left transition-all duration-200 hover:scale-[1.02] hover:border-indigo-500/30 group"
-          style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
           <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
             style={{ background: 'rgba(99,102,241,0.15)' }}>
             <Lock className="w-5 h-5" style={{ color: '#6366f1' }} />
           </div>
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-lg font-bold text-white">Kantinci Girişi</h2>
+            <h2 className="text-lg font-bold text-gray-800">Kantinci Girişi</h2>
             <span className="badge" style={{ background: 'rgba(99,102,241,0.2)', color: '#818cf8' }}>YÖNETİCİ</span>
           </div>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-500">
             {hasOwner ? 'Ürünleri, müşterileri ve borçları yönet' : 'İlk kurulum — şifreni belirle'}
           </p>
           <div className="flex items-center gap-1 mt-4 text-sm font-semibold" style={{ color: '#6366f1' }}>
@@ -144,16 +144,16 @@ function Landing({ onPick, hasOwner }) {
 
         <button onClick={() => onPick('customer-login')}
           className="card p-7 text-left transition-all duration-200 hover:scale-[1.02] hover:border-emerald-500/30 group"
-          style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
           <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
             style={{ background: 'rgba(34,197,94,0.15)' }}>
             <User className="w-5 h-5" style={{ color: '#22c55e' }} />
           </div>
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-lg font-bold text-white">Müşteri Girişi</h2>
+            <h2 className="text-lg font-bold text-gray-800">Müşteri Girişi</h2>
             <span className="badge" style={{ background: 'rgba(34,197,94,0.15)', color: '#4ade80' }}>MÜŞTERİ</span>
           </div>
-          <p className="text-sm text-gray-400">Borç durumunu ve alışveriş geçmişini görüntüle</p>
+          <p className="text-sm text-gray-500">Borç durumunu ve alışveriş geçmişini görüntüle</p>
           <div className="flex items-center gap-1 mt-4 text-sm font-semibold" style={{ color: '#22c55e' }}>
             Hesabı görüntüle <ChevronRight className="w-4 h-4" />
           </div>
@@ -199,10 +199,10 @@ function OwnerLogin({ ownerExists, onLogin, onBack, showToast }) {
         <div className="text-center mb-7">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', boxShadow: '0 6px 20px rgba(99,102,241,0.4)' }}>
-            <Lock className="w-6 h-6 text-white" />
+            <Lock className="w-6 h-6 text-gray-800" />
           </div>
-          <h2 className="text-xl font-bold text-white">{isSetup ? 'İlk Kurulum' : 'Kantinci Girişi'}</h2>
-          <p className="text-sm text-gray-400 mt-1">{isSetup ? 'Yönetici şifrenizi belirleyin' : 'Yönetici şifrenizi girin'}</p>
+          <h2 className="text-xl font-bold text-gray-800">{isSetup ? 'İlk Kurulum' : 'Kantinci Girişi'}</h2>
+          <p className="text-sm text-gray-500 mt-1">{isSetup ? 'Yönetici şifrenizi belirleyin' : 'Yönetici şifrenizi girin'}</p>
         </div>
 
         <div className="space-y-3">
@@ -261,10 +261,10 @@ function CustomerLogin({ onLogin, onBack, showToast }) {
         <div className="text-center mb-7">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)', boxShadow: '0 6px 20px rgba(34,197,94,0.35)' }}>
-            <User className="w-6 h-6 text-white" />
+            <User className="w-6 h-6 text-gray-800" />
           </div>
-          <h2 className="text-xl font-bold text-white">Müşteri Girişi</h2>
-          <p className="text-sm text-gray-400 mt-1">Kantincinin verdiği bilgiler ile giriş yapın</p>
+          <h2 className="text-xl font-bold text-gray-800">Müşteri Girişi</h2>
+          <p className="text-sm text-gray-500 mt-1">Kantincinin verdiği bilgiler ile giriş yapın</p>
         </div>
 
         <div className="space-y-3">
@@ -316,23 +316,23 @@ function OwnerPanel({ onLogout, showToast }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="px-6 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#13151f' }}>
+      <header className="px-6 py-4 border-b" style={{ borderColor: 'rgba(0,0,0,0.07)', background: '#ffffff' }}>
         <div className="max-w-7xl mx-auto flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)' }}>
-            <Coffee className="w-5 h-5 text-white" />
+            <Coffee className="w-5 h-5 text-gray-800" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-white">Çözüm Kantin</h1>
+            <h1 className="text-base font-bold text-gray-800">Çözüm Kantin</h1>
             <p className="text-xs text-gray-500">
-              Açık borç: <span className="text-indigo-400 font-semibold">{fmtTL(totalDebt)}</span>
+              Açık borç: <span className="text-indigo-600 font-semibold">{fmtTL(totalDebt)}</span>
               {' · '}{data.customers.length} müşteri{' · '}{data.products.length} ürün
             </p>
           </div>
         </div>
       </header>
 
-      <nav className="border-b" style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#13151f' }}>
+      <nav className="border-b" style={{ borderColor: 'rgba(0,0,0,0.07)', background: '#ffffff' }}>
         <div className="max-w-7xl mx-auto flex">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -368,7 +368,7 @@ function OwnerPanel({ onLogout, showToast }) {
         )}
       </main>
 
-      <footer className="border-t py-4 flex justify-center" style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#13151f' }}>
+      <footer className="border-t py-4 flex justify-center" style={{ borderColor: 'rgba(0,0,0,0.07)', background: '#ffffff' }}>
         <button onClick={onLogout} className="btn-ghost flex items-center gap-2">
           <LogOut className="w-4 h-4" /> Çıkış Yap
         </button>
@@ -444,17 +444,17 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
 
   if (customers.length === 0) return (
     <div className="card p-12 text-center mt-4">
-      <Users className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-      <h3 className="text-lg font-bold text-white mb-1">Henüz müşteri yok</h3>
-      <p className="text-gray-400 text-sm">Önce "Müşteriler" sekmesinden müşteri ekleyin.</p>
+      <Users className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+      <h3 className="text-lg font-bold text-gray-800 mb-1">Henüz müşteri yok</h3>
+      <p className="text-gray-500 text-sm">Önce "Müşteriler" sekmesinden müşteri ekleyin.</p>
     </div>
   );
 
   if (products.length === 0) return (
     <div className="card p-12 text-center mt-4">
-      <Package className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-      <h3 className="text-lg font-bold text-white mb-1">Henüz ürün yok</h3>
-      <p className="text-gray-400 text-sm">Önce "Ürünler" sekmesinden ürün ekleyin.</p>
+      <Package className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+      <h3 className="text-lg font-bold text-gray-800 mb-1">Henüz ürün yok</h3>
+      <p className="text-gray-500 text-sm">Önce "Ürünler" sekmesinden ürün ekleyin.</p>
     </div>
   );
 
@@ -462,7 +462,7 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
     <div className="grid lg:grid-cols-3 gap-4">
       <div className="lg:col-span-1 space-y-3">
         <div className="card p-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Müşteri Seç</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Müşteri Seç</p>
           {!selectedCustomer ? (
             <div className="max-h-64 overflow-y-auto space-y-2">
               {customers.map(c => {
@@ -470,9 +470,9 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
                 return (
                   <button key={c.id} onClick={() => setSelectedCustomer(c)}
                     className="w-full text-left px-3 py-2.5 rounded-xl border transition-all hover:border-indigo-500/40 hover:bg-indigo-500/5"
-                    style={{ borderColor: 'rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}>
+                    style={{ borderColor: 'rgba(0,0,0,0.07)', background: 'rgba(0,0,0,0.03)' }}>
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-sm text-white">{c.name}</span>
+                      <span className="font-semibold text-sm text-gray-800">{c.name}</span>
                       <span className="text-sm font-bold" style={{ color: bal > 0 ? '#f87171' : '#4ade80' }}>{fmtTL(bal)}</span>
                     </div>
                   </button>
@@ -484,23 +484,23 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <p className="text-xs text-indigo-200 mb-0.5">Seçili müşteri</p>
-                  <p className="font-bold text-white text-base">{selectedCustomer.name}</p>
+                  <p className="font-bold text-gray-800 text-base">{selectedCustomer.name}</p>
                   <p className="text-sm text-indigo-200">Borç: {fmtTL(customerBalance(selectedCustomer.id))}</p>
                 </div>
                 <button onClick={() => { setSelectedCustomer(null); setCart([]); setPaymentMode(false); }}
-                  className="text-indigo-200 hover:text-white">
+                  className="text-indigo-200 hover:text-gray-800">
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setPaymentMode(false)}
                   className="flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all"
-                  style={{ background: !paymentMode ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.15)', color: !paymentMode ? '#4f46e5' : 'white' }}>
+                  style={{ background: !paymentMode ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.08)', color: !paymentMode ? '#4f46e5' : 'white' }}>
                   Satış
                 </button>
                 <button onClick={() => setPaymentMode(true)}
                   className="flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all"
-                  style={{ background: paymentMode ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.15)', color: paymentMode ? '#4f46e5' : 'white' }}>
+                  style={{ background: paymentMode ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.08)', color: paymentMode ? '#4f46e5' : 'white' }}>
                   Ödeme Al
                 </button>
               </div>
@@ -510,9 +510,9 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
 
         {selectedCustomer && !paymentMode && (
           <div className="card p-4 animate-slide-in">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Sepet</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sepet</p>
             {cart.length === 0 ? (
-              <p className="text-sm text-gray-600 text-center py-6">Sağdan ürün ekleyin →</p>
+              <p className="text-sm text-gray-400 text-center py-6">Sağdan ürün ekleyin →</p>
             ) : (
               <>
                 <div className="space-y-3 mb-4 max-h-72 overflow-y-auto">
@@ -520,10 +520,10 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
                     const p = products.find(p => p.id === item.productId);
                     if (!p) return null;
                     return (
-                      <div key={item.productId} className="pb-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                      <div key={item.productId} className="pb-3 border-b" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
                         <div className="flex justify-between items-center mb-2">
-                          <p className="font-semibold text-sm text-white">{p.name}</p>
-                          <button onClick={() => removeFromCart(item.productId)} className="text-gray-600 hover:text-red-400 transition-colors">
+                          <p className="font-semibold text-sm text-gray-800">{p.name}</p>
+                          <button onClick={() => removeFromCart(item.productId)} className="text-gray-400 hover:text-red-400 transition-colors">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -531,17 +531,17 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
                           <div className="flex items-center gap-2">
                             <button onClick={() => updateQty(item.productId, -1)}
                               className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 transition-colors hover:bg-white/10"
-                              style={{ background: 'rgba(255,255,255,0.07)' }}>
+                              style={{ background: 'rgba(0,0,0,0.07)' }}>
                               <Minus className="w-3 h-3" />
                             </button>
-                            <span className="font-bold text-sm text-white w-5 text-center">{item.qty}</span>
+                            <span className="font-bold text-sm text-gray-800 w-5 text-center">{item.qty}</span>
                             <button onClick={() => updateQty(item.productId, 1)}
                               className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 transition-colors hover:bg-white/10"
-                              style={{ background: 'rgba(255,255,255,0.07)' }}>
+                              style={{ background: 'rgba(0,0,0,0.07)' }}>
                               <Plus className="w-3 h-3" />
                             </button>
                           </div>
-                          <span className="text-sm font-bold text-indigo-400">{fmtTL(p.price * item.qty)}</span>
+                          <span className="text-sm font-bold text-indigo-600">{fmtTL(p.price * item.qty)}</span>
                         </div>
                         <input value={item.note} onChange={(e) => updateNote(item.productId, e.target.value)}
                           placeholder="Not ekle..."
@@ -551,8 +551,8 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
                   })}
                 </div>
                 <div className="flex justify-between items-center mb-3 pt-2">
-                  <span className="text-sm font-semibold text-gray-400">Toplam</span>
-                  <span className="text-xl font-extrabold text-white">{fmtTL(cartTotal)}</span>
+                  <span className="text-sm font-semibold text-gray-500">Toplam</span>
+                  <span className="text-xl font-extrabold text-gray-800">{fmtTL(cartTotal)}</span>
                 </div>
                 <button onClick={completeSale} disabled={busy} className="btn-success w-full py-3">
                   {busy ? '...' : 'Veresiyeye Yaz'}
@@ -564,8 +564,8 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
 
         {selectedCustomer && paymentMode && (
           <div className="card p-4 animate-slide-in">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Nakit Ödeme</p>
-            <p className="text-sm text-gray-400 mb-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Nakit Ödeme</p>
+            <p className="text-sm text-gray-500 mb-3">
               Mevcut borç: <span className="text-red-400 font-bold">{fmtTL(customerBalance(selectedCustomer.id))}</span>
             </p>
             <input type="number" step="0.01" value={paymentAmount}
@@ -585,7 +585,7 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
       <div className="lg:col-span-2">
         <div className="card p-4">
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ürünler</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Ürünler</p>
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
               <input value={search} onChange={(e) => setSearch(e.target.value)}
@@ -599,18 +599,18 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
               return (
                 <button key={p.id} onClick={() => canAdd && addToCart(p)} disabled={!canAdd}
                   className="text-left rounded-xl overflow-hidden transition-all hover:scale-[1.02] disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  <div className="aspect-square overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.07)' }}>
+                  <div className="aspect-square overflow-hidden" style={{ background: 'rgba(0,0,0,0.05)' }}>
                     {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-10 h-10 text-gray-700" />
+                        <Package className="w-10 h-10 text-gray-300" />
                       </div>
                     )}
                   </div>
                   <div className="p-2.5">
-                    <p className="font-semibold text-sm text-white leading-tight truncate">{p.name}</p>
+                    <p className="font-semibold text-sm text-gray-800 leading-tight truncate">{p.name}</p>
                     <div className="flex justify-between items-center mt-1">
-                      <span className="font-bold text-sm text-indigo-400">{fmtTL(p.price)}</span>
+                      <span className="font-bold text-sm text-indigo-600">{fmtTL(p.price)}</span>
                       {p.stock !== null && (
                         <span className="text-xs" style={{ color: outOfStock ? '#f87171' : p.stock <= 5 ? '#fb923c' : '#6b7280' }}>
                           {p.stock} adet
@@ -623,7 +623,7 @@ function SaleTab({ data, customerBalance, refresh, showToast }) {
             })}
           </div>
           {filteredProducts.length === 0 && (
-            <p className="text-center py-10 text-gray-600 text-sm">Ürün bulunamadı</p>
+            <p className="text-center py-10 text-gray-400 text-sm">Ürün bulunamadı</p>
           )}
         </div>
       </div>
@@ -676,7 +676,7 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
     <div>
       <div className="flex justify-between items-center mb-4 mt-1">
         <div>
-          <h2 className="text-xl font-bold text-white">Müşteriler</h2>
+          <h2 className="text-xl font-bold text-gray-800">Müşteriler</h2>
           <p className="text-xs text-gray-500">{customers.length} / 20</p>
         </div>
         <button onClick={startAdd} disabled={customers.length >= 20} className="btn-primary flex items-center gap-2 disabled:opacity-40">
@@ -686,7 +686,7 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
 
       {(adding || editing) && (
         <div className="card p-5 mb-4 animate-slide-in">
-          <p className="text-sm font-bold text-white mb-3">{editing ? 'Müşteriyi Düzenle' : 'Yeni Müşteri'}</p>
+          <p className="text-sm font-bold text-gray-800 mb-3">{editing ? 'Müşteriyi Düzenle' : 'Yeni Müşteri'}</p>
           <div className="grid sm:grid-cols-2 gap-3">
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Müşteri adı" className="input" />
@@ -711,16 +711,16 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
             <div key={c.id} className="card p-4 hover:border-white/10 transition-colors">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <p className="font-bold text-white">{c.name}</p>
+                  <p className="font-bold text-gray-800">{c.name}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{cTxns.length} alışveriş · {cPays.length} ödeme</p>
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => setViewing(c)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all">
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-indigo-600 hover:bg-indigo-500/10 transition-all">
                     <Eye className="w-4 h-4" />
                   </button>
                   <button onClick={() => startEdit(c)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all">
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-white/10 transition-all">
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button onClick={() => remove(c)}
@@ -729,7 +729,7 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
                   </button>
                 </div>
               </div>
-              <div className="pt-3 border-t flex justify-between items-center" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              <div className="pt-3 border-t flex justify-between items-center" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
                 <span className="text-xs text-gray-500">Borç</span>
                 <span className="text-2xl font-extrabold" style={{ color: bal > 0 ? '#f87171' : '#4ade80' }}>{fmtTL(bal)}</span>
               </div>
@@ -740,8 +740,8 @@ function CustomersTab({ data, customerBalance, refresh, showToast }) {
 
       {customers.length === 0 && !adding && (
         <div className="card p-12 text-center mt-2">
-          <Users className="w-12 h-12 mx-auto mb-3 text-gray-700" />
-          <h3 className="text-lg font-bold text-white mb-1">Henüz müşteri yok</h3>
+          <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <h3 className="text-lg font-bold text-gray-800 mb-1">Henüz müşteri yok</h3>
           <p className="text-gray-500 text-sm">"Yeni Müşteri" ile başlayın</p>
         </div>
       )}
@@ -773,27 +773,27 @@ function CustomerHistoryModal({ customer, txns, payments, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
       <div className="card-elevated max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="p-5 border-b flex justify-between items-start" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="p-5 border-b flex justify-between items-start" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
           <div>
-            <h3 className="text-lg font-bold text-white">{customer.name}</h3>
+            <h3 className="text-lg font-bold text-gray-800">{customer.name}</h3>
             <div className="flex gap-4 mt-2 text-sm">
-              <span className="text-gray-400">Alışveriş: <span className="text-red-400 font-semibold">{fmtTL(totalDebt)}</span></span>
-              <span className="text-gray-400">Ödeme: <span className="text-green-400 font-semibold">{fmtTL(totalPaid)}</span></span>
+              <span className="text-gray-500">Alışveriş: <span className="text-red-400 font-semibold">{fmtTL(totalDebt)}</span></span>
+              <span className="text-gray-500">Ödeme: <span className="text-green-400 font-semibold">{fmtTL(totalPaid)}</span></span>
             </div>
             <p className="text-xl font-extrabold mt-1" style={{ color: balance > 0 ? '#f87171' : '#4ade80' }}>
               Bakiye: {fmtTL(balance)}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
         <div className="overflow-y-auto p-5 space-y-3">
           {combined.length === 0 ? (
-            <p className="text-center py-8 text-gray-600">Henüz kayıt yok</p>
+            <p className="text-center py-8 text-gray-400">Henüz kayıt yok</p>
           ) : combined.map(rec => (
             <div key={rec.id} className="rounded-xl p-3 border"
-              style={{ borderColor: 'rgba(255,255,255,0.07)', background: rec.type === 'payment' ? 'rgba(34,197,94,0.06)' : 'rgba(255,255,255,0.03)' }}>
+              style={{ borderColor: 'rgba(0,0,0,0.07)', background: rec.type === 'payment' ? 'rgba(34,197,94,0.06)' : 'rgba(0,0,0,0.03)' }}>
               <div className="flex justify-between items-start mb-1">
                 <div className="flex items-center gap-2">
                   {rec.type === 'sale'
@@ -884,7 +884,7 @@ function ProductsTab({ products, refresh, showToast }) {
     <div>
       <div className="flex justify-between items-center mb-4 mt-1">
         <div>
-          <h2 className="text-xl font-bold text-white">Ürünler & Stok</h2>
+          <h2 className="text-xl font-bold text-gray-800">Ürünler & Stok</h2>
           <p className="text-xs text-gray-500">{products.length} ürün</p>
         </div>
         <button onClick={startAdd} className="btn-primary flex items-center gap-2">
@@ -894,15 +894,15 @@ function ProductsTab({ products, refresh, showToast }) {
 
       {(adding || editing) && (
         <div className="card p-5 mb-4 animate-slide-in">
-          <p className="text-sm font-bold text-white mb-4">{editing ? 'Ürünü Düzenle' : 'Yeni Ürün'}</p>
+          <p className="text-sm font-bold text-gray-800 mb-4">{editing ? 'Ürünü Düzenle' : 'Yeni Ürün'}</p>
           <div className="grid md:grid-cols-2 gap-5">
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-gray-400 block mb-1.5">Ürün adı</label>
+                <label className="text-xs font-semibold text-gray-500 block mb-1.5">Ürün adı</label>
                 <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-400 block mb-1.5">Fiyat (₺)</label>
+                <label className="text-xs font-semibold text-gray-500 block mb-1.5">Fiyat (₺)</label>
                 <input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="input" />
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -912,18 +912,18 @@ function ProductsTab({ products, refresh, showToast }) {
               </label>
               {form.trackStock && (
                 <div>
-                  <label className="text-xs font-semibold text-gray-400 block mb-1.5">Stok adedi</label>
+                  <label className="text-xs font-semibold text-gray-500 block mb-1.5">Stok adedi</label>
                   <input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} className="input" />
                 </div>
               )}
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-400 block mb-1.5">Ürün görseli</label>
+              <label className="text-xs font-semibold text-gray-500 block mb-1.5">Ürün görseli</label>
               <div className="aspect-square rounded-xl border-2 border-dashed flex items-center justify-center mb-3 overflow-hidden"
-                style={{ borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}>
-                {form.image ? <img src={form.image} alt="" className="w-full h-full object-cover" /> : <Package className="w-12 h-12 text-gray-700" />}
+                style={{ borderColor: 'rgba(0,0,0,0.08)', background: 'rgba(0,0,0,0.03)' }}>
+                {form.image ? <img src={form.image} alt="" className="w-full h-full object-cover" /> : <Package className="w-12 h-12 text-gray-300" />}
               </div>
-              <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm text-gray-400 w-full" />
+              <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm text-gray-500 w-full" />
               {form.image && <button onClick={() => setForm({ ...form, image: '' })} className="text-xs text-red-400 mt-1">Görseli kaldır</button>}
             </div>
           </div>
@@ -942,22 +942,22 @@ function ProductsTab({ products, refresh, showToast }) {
           const outOfStock = p.stock !== null && p.stock <= 0;
           return (
             <div key={p.id} className="card overflow-hidden">
-              <div className="aspect-video overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+              <div className="aspect-video overflow-hidden" style={{ background: 'rgba(0,0,0,0.04)' }}>
                 {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Package className="w-10 h-10 text-gray-700" />
+                    <Package className="w-10 h-10 text-gray-300" />
                   </div>
                 )}
               </div>
               <div className="p-3">
                 <div className="flex justify-between items-start mb-1">
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-white text-sm truncate">{p.name}</p>
-                    <p className="text-indigo-400 font-bold text-sm">{fmtTL(p.price)}</p>
+                    <p className="font-bold text-gray-800 text-sm truncate">{p.name}</p>
+                    <p className="text-indigo-600 font-bold text-sm">{fmtTL(p.price)}</p>
                   </div>
                   <div className="flex gap-1 ml-2">
                     <button onClick={() => startEdit(p)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all">
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-white/10 transition-all">
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => remove(p)}
@@ -967,10 +967,10 @@ function ProductsTab({ products, refresh, showToast }) {
                   </div>
                 </div>
                 {p.stock !== null ? (
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
                     <button onClick={() => adjustStock(p, -1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-white/10 transition-all"
-                      style={{ background: 'rgba(255,255,255,0.06)' }}>
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white/10 transition-all"
+                      style={{ background: 'rgba(0,0,0,0.07)' }}>
                       <Minus className="w-3 h-3" />
                     </button>
                     <span className="text-sm font-bold flex items-center gap-1"
@@ -979,13 +979,13 @@ function ProductsTab({ products, refresh, showToast }) {
                       {p.stock} adet
                     </span>
                     <button onClick={() => adjustStock(p, 1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-white/10 transition-all"
-                      style={{ background: 'rgba(255,255,255,0.06)' }}>
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white/10 transition-all"
+                      style={{ background: 'rgba(0,0,0,0.07)' }}>
                       <Plus className="w-3 h-3" />
                     </button>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-600 mt-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>Stok takibi yok</p>
+                  <p className="text-xs text-gray-400 mt-2 pt-2 border-t" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>Stok takibi yok</p>
                 )}
               </div>
             </div>
@@ -995,8 +995,8 @@ function ProductsTab({ products, refresh, showToast }) {
 
       {products.length === 0 && !adding && (
         <div className="card p-12 text-center mt-2">
-          <Package className="w-12 h-12 mx-auto mb-3 text-gray-700" />
-          <h3 className="text-lg font-bold text-white mb-1">Henüz ürün yok</h3>
+          <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <h3 className="text-lg font-bold text-gray-800 mb-1">Henüz ürün yok</h3>
           <p className="text-gray-500 text-sm">"Yeni Ürün" ile başlayın</p>
         </div>
       )}
@@ -1054,15 +1054,15 @@ function CustomerPanel({ customer, onLogout }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="px-6 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#13151f' }}>
+      <header className="px-6 py-4 border-b" style={{ borderColor: 'rgba(0,0,0,0.07)', background: '#ffffff' }}>
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)' }}>
-              <User className="w-5 h-5 text-white" />
+              <User className="w-5 h-5 text-gray-800" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-white">Hoş geldiniz, {customer.name}</h1>
+              <h1 className="text-base font-bold text-gray-800">Hoş geldiniz, {customer.name}</h1>
             </div>
           </div>
           <button onClick={onLogout} className="btn-ghost flex items-center gap-2 text-sm py-2">
@@ -1078,7 +1078,7 @@ function CustomerPanel({ customer, onLogout }) {
               ? 'radial-gradient(circle at 50% 0%, #ef4444, transparent 70%)'
               : 'radial-gradient(circle at 50% 0%, #22c55e, transparent 70%)',
           }} />
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Mevcut Borç</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Mevcut Borç</p>
           <p className="text-6xl font-extrabold mb-4 tracking-tight" style={{ color: balance > 0 ? '#f87171' : '#4ade80' }}>
             {fmtTL(balance)}
           </p>
@@ -1087,7 +1087,7 @@ function CustomerPanel({ customer, onLogout }) {
               <p className="text-gray-500 text-xs mb-1">Toplam Alışveriş</p>
               <p className="font-bold text-red-400">{fmtTL(totalDebt)}</p>
             </div>
-            <div className="w-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+            <div className="w-px" style={{ background: 'rgba(0,0,0,0.07)' }} />
             <div>
               <p className="text-gray-500 text-xs mb-1">Toplam Ödeme</p>
               <p className="font-bold text-green-400">{fmtTL(totalPaid)}</p>
@@ -1097,14 +1097,14 @@ function CustomerPanel({ customer, onLogout }) {
 
         {combined.length > 0 && (
           <div className="card p-5">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Son 6 Ay — Bakiye Seyri</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Son 6 Ay — Bakiye Seyri</p>
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={monthlyHistory}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
                 <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ background: '#1e2130', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#f0f0f0' }}
+                  contentStyle={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, color: '#1a1d2e' }}
                   formatter={(v) => fmtTL(v)} />
                 <Line type="monotone" dataKey="bakiye" stroke="#6366f1" strokeWidth={2.5} dot={{ fill: '#6366f1', r: 4, strokeWidth: 0 }} />
               </LineChart>
@@ -1113,19 +1113,19 @@ function CustomerPanel({ customer, onLogout }) {
         )}
 
         <div className="card p-5">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">İşlem Geçmişi</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">İşlem Geçmişi</p>
           {combined.length === 0 ? (
-            <p className="text-center py-8 text-gray-600 text-sm">Henüz işlem yok</p>
+            <p className="text-center py-8 text-gray-400 text-sm">Henüz işlem yok</p>
           ) : (
             <div className="space-y-3">
               {combined.map(rec => (
                 <div key={rec.id} className="rounded-xl p-3.5 border"
-                  style={{ borderColor: 'rgba(255,255,255,0.07)', background: rec.type === 'payment' ? 'rgba(34,197,94,0.05)' : 'rgba(255,255,255,0.03)' }}>
+                  style={{ borderColor: 'rgba(0,0,0,0.07)', background: rec.type === 'payment' ? 'rgba(34,197,94,0.05)' : 'rgba(0,0,0,0.03)' }}>
                   <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2">
                       {rec.type === 'sale' ? <ShoppingBag className="w-4 h-4 text-red-400" /> : <Wallet className="w-4 h-4 text-green-400" />}
                       <div>
-                        <p className="text-sm font-semibold text-white">{rec.type === 'sale' ? 'Alışveriş' : 'Nakit Ödeme'}</p>
+                        <p className="text-sm font-semibold text-gray-800">{rec.type === 'sale' ? 'Alışveriş' : 'Nakit Ödeme'}</p>
                         <p className="text-xs text-gray-500">{fmtDate(rec.date)}</p>
                       </div>
                     </div>
@@ -1134,7 +1134,7 @@ function CustomerPanel({ customer, onLogout }) {
                     </span>
                   </div>
                   {rec.type === 'sale' && (
-                    <div className="ml-6 mt-2 pt-2 border-t space-y-1" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                    <div className="ml-6 mt-2 pt-2 border-t space-y-1" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
                       {rec.items.map((it, idx) => (
                         <div key={idx}>
                           <div className="flex justify-between text-sm text-gray-300">
