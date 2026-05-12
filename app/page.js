@@ -828,7 +828,8 @@ function PaymentModal({ customer, customerBalance, onClose, onDone, showToast })
 // ========== CUSTOMER HISTORY MODAL ==========
 function CustomerHistoryModal({ customer, txns, payments, onClose, onRefresh, showToast }) {
   const [localTxns, setLocalTxns] = useState(txns);
-  const [deleting, setDeleting] = useState(null); // 'txnId' or 'txnId-itemIdx'
+  const [deleting, setDeleting] = useState(null);
+  const [editingQty, setEditingQty] = useState(null); // { txnId, itemIndex, value }
 
   const combined = useMemo(() => {
     const all = [...localTxns.map(t => ({ type: 'sale', ...t })), ...payments.map(p => ({ type: 'payment', ...p }))];
@@ -852,8 +853,7 @@ function CustomerHistoryModal({ customer, txns, payments, onClose, onRefresh, sh
   };
 
   const deleteItem = async (txnId, itemIndex) => {
-    const key = `${txnId}-${itemIndex}`;
-    setDeleting(key);
+    setDeleting(`${txnId}-${itemIndex}`);
     try {
       await api(`/api/transactions?id=${txnId}&itemIndex=${itemIndex}`, { method: 'DELETE' });
       setLocalTxns(prev => prev.map(t => {
@@ -866,6 +866,20 @@ function CustomerHistoryModal({ customer, txns, payments, onClose, onRefresh, sh
       onRefresh();
     } catch (e) { showToast(e.message, 'error'); }
     setDeleting(null);
+  };
+
+  const saveQty = async () => {
+    if (!editingQty) return;
+    const { txnId, itemIndex, value } = editingQty;
+    const newQty = parseInt(value);
+    if (!newQty || newQty < 1) { setEditingQty(null); return; }
+    try {
+      const r = await api('/api/transactions', { method: 'PATCH', body: JSON.stringify({ id: txnId, itemIndex, newQty }) });
+      setLocalTxns(prev => prev.map(t => t.id === txnId ? r.txn : t));
+      showToast('Miktar güncellendi');
+      onRefresh();
+    } catch (e) { showToast(e.message, 'error'); }
+    setEditingQty(null);
   };
 
   return (
@@ -893,7 +907,8 @@ function CustomerHistoryModal({ customer, txns, payments, onClose, onRefresh, sh
           ) : combined.map(rec => (
             <div key={rec.id} className="rounded-xl p-3 border"
               style={{ borderColor: 'rgba(0,0,0,0.07)', background: rec.type === 'payment' ? 'rgba(34,197,94,0.06)' : 'rgba(0,0,0,0.03)' }}>
-              <div className="flex justify-between items-start mb-1">
+              {/* Alışveriş başlığı */}
+              <div className="flex justify-between items-center mb-1">
                 <div className="flex items-center gap-2">
                   {rec.type === 'sale'
                     ? <ShoppingBag className="w-4 h-4 text-red-400" />
@@ -905,43 +920,62 @@ function CustomerHistoryModal({ customer, txns, payments, onClose, onRefresh, sh
                     {rec.type === 'sale' ? '+' : '-'}{fmtTL(rec.type === 'sale' ? rec.total : rec.amount)}
                   </span>
                   {rec.type === 'sale' && (
-                    <button
-                      onClick={() => deleteTxn(rec.id)}
-                      disabled={deleting === rec.id}
-                      title="Alışverişi tamamen sil"
-                      className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:bg-red-50"
+                    <button onClick={() => deleteTxn(rec.id)} disabled={!!deleting}
+                      className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-red-50 transition-all"
                       style={{ color: '#f87171' }}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
               </div>
+
+              {/* Ürün satırları */}
               {rec.type === 'sale' && (
-                <div className="ml-6 mt-2 space-y-1.5">
-                  {rec.items.map((it, idx) => (
-                    <div key={idx} className="flex items-center justify-between gap-2 group">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between text-sm text-gray-600">
-                          <span>{it.qty}× {it.productName}</span>
-                          <span className="font-medium">{fmtTL(it.subtotal)}</span>
-                        </div>
-                        {it.note && <p className="text-xs text-gray-400 italic ml-1">📝 {it.note}</p>}
-                      </div>
-                      {rec.items.length > 1 && (
+                <div className="mt-2 space-y-1 border-t pt-2" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
+                  {rec.items.map((it, idx) => {
+                    const isEditingThis = editingQty?.txnId === rec.id && editingQty?.itemIndex === idx;
+                    return (
+                      <div key={idx} className="flex items-center gap-2 py-0.5">
+                        {/* Miktar */}
+                        {isEditingThis ? (
+                          <input
+                            type="number" min="1"
+                            value={editingQty.value}
+                            onChange={e => setEditingQty({ ...editingQty, value: e.target.value })}
+                            onBlur={saveQty}
+                            onKeyDown={e => { if (e.key === 'Enter') saveQty(); if (e.key === 'Escape') setEditingQty(null); }}
+                            className="w-12 text-center font-bold text-sm rounded-lg border px-1 py-0.5"
+                            style={{ borderColor: '#6366f1', outline: 'none', color: '#6366f1' }}
+                            autoFocus
+                          />
+                        ) : (
+                          <button
+                            onClick={() => setEditingQty({ txnId: rec.id, itemIndex: idx, value: String(it.qty) })}
+                            className="w-12 text-center font-bold text-sm rounded-lg px-1 py-0.5 transition-all hover:bg-indigo-50"
+                            style={{ color: '#6366f1', border: '1px solid rgba(99,102,241,0.2)' }}>
+                            {it.qty}×
+                          </button>
+                        )}
+                        {/* Ürün adı + tutar */}
+                        <span className="flex-1 text-sm text-gray-700 truncate">{it.productName}</span>
+                        <span className="text-sm font-medium text-gray-500">{fmtTL(it.subtotal)}</span>
+                        {/* Ürün sil */}
                         <button
                           onClick={() => deleteItem(rec.id, idx)}
-                          disabled={deleting === `${rec.id}-${idx}`}
-                          title="Bu ürünü sil"
-                          className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                          disabled={!!deleting}
+                          className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-red-50 transition-all flex-shrink-0"
                           style={{ color: '#f87171' }}>
-                          <X className="w-3 h-3" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
+                  {rec.items.some(it => it.note) && rec.items.map((it, idx) => it.note ? (
+                    <p key={idx} className="text-xs text-gray-400 italic ml-14">📝 {it.productName}: {it.note}</p>
+                  ) : null)}
                 </div>
               )}
-              {rec.type === 'payment' && <p className="ml-6 text-xs text-green-500">Nakit ödeme alındı</p>}
+              {rec.type === 'payment' && <p className="ml-6 text-xs text-green-500 mt-1">Nakit ödeme alındı</p>}
             </div>
           ))}
         </div>

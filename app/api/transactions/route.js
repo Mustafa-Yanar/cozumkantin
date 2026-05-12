@@ -78,6 +78,49 @@ export async function POST(request) {
   return NextResponse.json({ txn });
 }
 
+// PATCH: update qty of a single item in a transaction
+export async function PATCH(request) {
+  const session = await requireOwner();
+  if (!session) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 });
+  const body = await request.json();
+  const { id, itemIndex, newQty } = body;
+  if (!id || itemIndex === undefined || !newQty || newQty < 1) {
+    return NextResponse.json({ error: 'Geçersiz parametre' }, { status: 400 });
+  }
+
+  const [txns, products] = await Promise.all([getTransactions(), getProducts()]);
+  const txn = txns.find(t => t.id === id);
+  if (!txn) return NextResponse.json({ error: 'Bulunamadı' }, { status: 404 });
+
+  const item = txn.items[itemIndex];
+  if (!item) return NextResponse.json({ error: 'Ürün bulunamadı' }, { status: 404 });
+
+  const diff = newQty - item.qty; // positive = needs more stock, negative = returns stock
+  const product = products.find(p => p.id === item.productId);
+  if (product && product.stock !== null && diff > 0 && product.stock < diff) {
+    return NextResponse.json({ error: `${product.name} stoğu yetersiz` }, { status: 400 });
+  }
+
+  const newItems = txn.items.map((it, i) => i === itemIndex
+    ? { ...it, qty: newQty, subtotal: it.unitPrice * newQty }
+    : it
+  );
+  const updatedTxn = { ...txn, items: newItems, total: newItems.reduce((s, i) => s + i.subtotal, 0) };
+
+  const nextProducts = products.map(p =>
+    p.id === item.productId && p.stock !== null
+      ? { ...p, stock: Math.max(0, p.stock - diff) }
+      : p
+  );
+
+  await Promise.all([
+    setTransactions(txns.map(t => t.id === id ? updatedTxn : t)),
+    setProducts(nextProducts),
+  ]);
+
+  return NextResponse.json({ txn: updatedTxn });
+}
+
 export async function DELETE(request) {
   const session = await requireOwner();
   if (!session) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 });
