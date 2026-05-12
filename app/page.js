@@ -324,7 +324,6 @@ function OwnerPanel({ onLogout, showToast }) {
             <h1 className="text-base font-bold text-gray-800">Çözüm Kantin</h1>
             <p className="text-xs text-gray-500">
               Açık borç: <span className="text-indigo-600 font-semibold">{fmtTL(totalDebt)}</span>
-              {' · '}{data.customers.length} müşteri{' · '}{data.products.length} ürün
             </p>
           </div>
           <button onClick={onLogout} className="btn-ghost flex items-center gap-2 text-sm py-2">
