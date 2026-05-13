@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTransactions, setTransactions, getProducts, getCustomers } from '@/lib/kv';
+import { getTransactions, setTransactions, getProducts, getCustomers, getPayments } from '@/lib/kv';
 import { requireOwner } from '@/lib/auth';
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -55,7 +55,7 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Geçersiz parametre' }, { status: 400 });
   }
 
-  const txns = await getTransactions();
+  const [txns, payments] = await Promise.all([getTransactions(), getPayments()]);
   const txn = txns.find(t => t.id === id);
   if (!txn) return NextResponse.json({ error: 'Bulunamadı' }, { status: 404 });
 
@@ -66,7 +66,14 @@ export async function PATCH(request) {
     ? { ...it, qty: newQty, subtotal: it.unitPrice * newQty }
     : it
   );
-  const updatedTxn = { ...txn, items: newItems, total: newItems.reduce((s, i) => s + i.subtotal, 0) };
+  const newTxnTotal = newItems.reduce((s, i) => s + i.subtotal, 0);
+  const otherTxnsTotal = txns.filter(t => t.id !== id && t.customerId === txn.customerId).reduce((s, t) => s + t.total, 0);
+  const totalPaid = payments.filter(p => p.customerId === txn.customerId).reduce((s, p) => s + p.amount, 0);
+  if (otherTxnsTotal + newTxnTotal < totalPaid) {
+    return NextResponse.json({ error: 'Bu değişiklik bakiyeyi eksiye düşürür' }, { status: 400 });
+  }
+
+  const updatedTxn = { ...txn, items: newItems, total: newTxnTotal };
   await setTransactions(txns.map(t => t.id === id ? updatedTxn : t));
   return NextResponse.json({ txn: updatedTxn });
 }
@@ -79,20 +86,34 @@ export async function DELETE(request) {
   const itemIndex = searchParams.get('itemIndex');
   if (!id) return NextResponse.json({ error: 'id gerekli' }, { status: 400 });
 
-  const txns = await getTransactions();
+  const [txns, payments] = await Promise.all([getTransactions(), getPayments()]);
   const txn = txns.find((t) => t.id === id);
   if (!txn) return NextResponse.json({ error: 'Bulunamadı' }, { status: 404 });
 
+  const customerId = txn.customerId;
+  const totalPaid = payments.filter((p) => p.customerId === customerId).reduce((s, p) => s + p.amount, 0);
+
   if (itemIndex !== null) {
     const idx = parseInt(itemIndex);
+    const removedAmount = txn.items[idx]?.subtotal ?? 0;
     const newItems = txn.items.filter((_, i) => i !== idx);
+    const newTxnTotal = newItems.reduce((s, i) => s + i.subtotal, 0);
+    const otherTxnsTotal = txns.filter((t) => t.id !== id).filter((t) => t.customerId === customerId).reduce((s, t) => s + t.total, 0);
+    const newTotalDebt = otherTxnsTotal + newTxnTotal;
+    if (newTotalDebt < totalPaid) {
+      return NextResponse.json({ error: 'Bu ürün silinirse bakiye eksiye düşer' }, { status: 400 });
+    }
     if (newItems.length === 0) {
       await setTransactions(txns.filter((t) => t.id !== id));
     } else {
-      const updatedTxn = { ...txn, items: newItems, total: newItems.reduce((s, i) => s + i.subtotal, 0) };
+      const updatedTxn = { ...txn, items: newItems, total: newTxnTotal };
       await setTransactions(txns.map((t) => (t.id === id ? updatedTxn : t)));
     }
   } else {
+    const newTotalDebt = txns.filter((t) => t.id !== id && t.customerId === customerId).reduce((s, t) => s + t.total, 0);
+    if (newTotalDebt < totalPaid) {
+      return NextResponse.json({ error: 'Bu alışveriş silinirse bakiye eksiye düşer' }, { status: 400 });
+    }
     await setTransactions(txns.filter((t) => t.id !== id));
   }
 
