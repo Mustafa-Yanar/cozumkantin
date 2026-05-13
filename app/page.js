@@ -1003,7 +1003,7 @@ function ProductEditModal({ product, onClose, onDone, showToast }) {
     if (isNaN(price) || price < 0) { showToast('Geçerli bir fiyat girin', 'error'); return; }
     setBusy(true);
     try {
-      await api('/api/products', { method: 'PUT', body: JSON.stringify({ id: product.id, name: form.name, price, stock: null, image: form.image, category: form.category }) });
+      await api('/api/products', { method: 'PUT', body: JSON.stringify({ id: product.id, name: form.name, price, image: form.image, category: form.category }) });
       showToast('Ürün güncellendi'); onDone();
     } catch (e) { showToast(e.message, 'error'); }
     setBusy(false);
@@ -1088,7 +1088,7 @@ function ProductsTab({ products, refresh, showToast }) {
     if (isNaN(price) || price < 0) { showToast('Geçerli bir fiyat girin', 'error'); return; }
     setAddBusy(true);
     try {
-      await api('/api/products', { method: 'POST', body: JSON.stringify({ name: addForm.name, price, stock: null, image: addForm.image, category: addForm.category }) });
+      await api('/api/products', { method: 'POST', body: JSON.stringify({ name: addForm.name, price, image: addForm.image, category: addForm.category }) });
       showToast('Ürün eklendi'); setAdding(false); await refresh();
     } catch (e) { showToast(e.message, 'error'); }
     setAddBusy(false);
