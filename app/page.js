@@ -830,7 +830,7 @@ function CustomerHistoryModal({ customer, txns, payments, onClose, onRefresh, sh
   const balance = totalDebt - totalPaid;
 
   const deleteTxn = async (txnId) => {
-    if (!confirm('Bu alışverişin tamamı silinsin mi? Stok iade edilecek.')) return;
+    if (!confirm('Bu alışverişin tamamı silinsin mi?')) return;
     setDeleting(txnId);
     try {
       await api(`/api/transactions?id=${txnId}`, { method: 'DELETE' });
@@ -984,7 +984,6 @@ const CATEGORIES = [
 function ProductEditModal({ product, onClose, onDone, showToast }) {
   const [form, setForm] = useState({
     name: product.name, price: product.price.toString(),
-    stock: product.stock !== null ? product.stock.toString() : '',
     image: product.image || '', category: product.category || 'diger',
   });
   const [busy, setBusy] = useState(false);
