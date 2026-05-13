@@ -3,6 +3,8 @@ import { getProducts, setProducts } from '@/lib/kv';
 import { requireOwner } from '@/lib/auth';
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const MAX_IMAGE_BYTES = 500 * 1024; // 500KB base64 karakter sayısı olarak ~666KB, yaklaşık kontrol
+const validateImage = (image) => !image || Buffer.byteLength(image, 'utf8') <= MAX_IMAGE_BYTES * 1.4;
 
 export async function GET() {
   const session = await requireOwner();
@@ -18,6 +20,9 @@ export async function POST(request) {
   const products = await getProducts();
   if (!body.name || body.price == null) {
     return NextResponse.json({ error: 'İsim ve fiyat zorunlu' }, { status: 400 });
+  }
+  if (!validateImage(body.image)) {
+    return NextResponse.json({ error: 'Görsel 500KB altında olmalı' }, { status: 400 });
   }
   const newProduct = {
     id: uid(),
@@ -37,6 +42,9 @@ export async function PUT(request) {
   const products = await getProducts();
   const idx = products.findIndex((p) => p.id === body.id);
   if (idx < 0) return NextResponse.json({ error: 'Bulunamadı' }, { status: 404 });
+  if (!validateImage(body.image)) {
+    return NextResponse.json({ error: 'Görsel 500KB altında olmalı' }, { status: 400 });
+  }
   const updated = {
     ...products[idx],
     name: body.name ?? products[idx].name,

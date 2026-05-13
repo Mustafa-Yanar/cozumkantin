@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPayments, setPayments, getCustomers } from '@/lib/kv';
+import { getPayments, setPayments, getCustomers, getTransactions } from '@/lib/kv';
 import { requireOwner } from '@/lib/auth';
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -21,9 +21,16 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Geçerli müşteri ve tutar gerekli' }, { status: 400 });
   }
 
-  const [customers, payments] = await Promise.all([getCustomers(), getPayments()]);
+  const [customers, payments, txns] = await Promise.all([getCustomers(), getPayments(), getTransactions()]);
   const customer = customers.find((c) => c.id === customerId);
   if (!customer) return NextResponse.json({ error: 'Müşteri bulunamadı' }, { status: 404 });
+
+  const totalDebt = txns.filter((t) => t.customerId === customerId).reduce((s, t) => s + t.total, 0);
+  const totalPaid = payments.filter((p) => p.customerId === customerId).reduce((s, p) => s + p.amount, 0);
+  const balance = totalDebt - totalPaid;
+  if (parseFloat(amount) > balance + 0.001) {
+    return NextResponse.json({ error: `Ödeme borçtan fazla olamaz (max: ${balance.toFixed(2)} ₺)` }, { status: 400 });
+  }
 
   const pay = {
     id: uid(),

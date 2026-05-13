@@ -343,12 +343,6 @@ function OwnerPanel({ onLogout, showToast }) {
                 background: tab === t.id ? 'rgba(99,102,241,0.05)' : 'transparent',
               }}>
               <t.icon className="w-4 h-4" /> {t.label}
-              {t.badge && (
-                <span className="px-1.5 py-0.5 rounded-md text-xs font-bold"
-                  style={{ background: 'rgba(239,68,68,0.2)', color: '#f87171' }}>
-                  {t.badge}
-                </span>
-              )}
             </button>
           ))}
         </div>
@@ -773,6 +767,7 @@ function PaymentModal({ customer, customerBalance, onClose, onDone, showToast })
   const recordPayment = async () => {
     const amt = parseFloat(amount);
     if (!amt || amt <= 0) return;
+    if (amt > bal + 0.001) { showToast('Ödeme borçtan fazla olamaz', 'error'); return; }
     setBusy(true);
     try {
       await api('/api/payments', { method: 'POST', body: JSON.stringify({ customerId: customer.id, amount: amt }) });
@@ -799,14 +794,14 @@ function PaymentModal({ customer, customerBalance, onClose, onDone, showToast })
           <p className="text-3xl font-extrabold" style={{ color: '#ef4444' }}>{fmtTL(bal)}</p>
         </div>
 
-        <input type="number" step="0.01" value={amount}
+        <input type="number" step="0.01" min="0.01" max={bal.toFixed(2)} value={amount}
           onChange={e => setAmount(e.target.value)}
           placeholder="Ödeme tutarı (₺)" className="input mb-3" autoFocus />
-        <button onClick={() => setAmount(bal.toFixed(2))}
-          className="btn-ghost w-full mb-3 text-sm">
+        <button onClick={() => setAmount(bal.toFixed(2))} disabled={bal <= 0}
+          className="btn-ghost w-full mb-3 text-sm disabled:opacity-40">
           Tüm Borcu Kapat ({fmtTL(bal)})
         </button>
-        <button onClick={recordPayment} disabled={busy || !amount} className="btn-success w-full py-3">
+        <button onClick={recordPayment} disabled={busy || !amount || bal <= 0} className="btn-success w-full py-3 disabled:opacity-50">
           {busy ? '...' : 'Ödemeyi Kaydet'}
         </button>
       </div>

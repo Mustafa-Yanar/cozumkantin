@@ -23,9 +23,6 @@ export async function POST(request) {
   if (!session) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 });
   const body = await request.json();
   const customers = await getCustomers();
-  if (customers.length >= 20) {
-    return NextResponse.json({ error: 'En fazla 20 müşteri eklenebilir' }, { status: 400 });
-  }
   if (!body.name || !body.username || !body.password) {
     return NextResponse.json({ error: 'Tüm alanlar zorunlu' }, { status: 400 });
   }
